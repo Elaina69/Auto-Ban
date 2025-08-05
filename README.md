@@ -16,7 +16,13 @@
 
 ## How to host
  - Clone this repo
-  
+
+ - Open terminal(cmd) on this repo, install discord.js
+
+```bash
+npm install discord.js
+```
+
  - Create new file `/configs/botConfig.js`
 
 ```javascript
