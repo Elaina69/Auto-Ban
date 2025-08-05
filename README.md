@@ -4,7 +4,7 @@
 
 <p align="center">
     <img src="https://count.getloli.com/@Auto-Ban?name=Auto-Ban&theme=gelbooru&padding=7&offset=0&align=center&scale=1&pixelated=1&darkmode=auto" alt="moe counter" />
-    <p align="center"> Visitors (Since 2023/02/01) </p>
+    <p align="center"> Visitors (Since 2025/08/06) </p>
     <br>
     <p align="center"> Lightweight bot for Discord, auto ban users whenever they send message in specific channel </p>
 </p>
