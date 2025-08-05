@@ -24,7 +24,7 @@ export default {
     // Bot token
     token: string,
     // Bot id (Application Id)
-    botId: "1402250342040731688",
+    botId: string,
 
     deleteMessage: true,
 
