@@ -129,13 +129,13 @@ client.on(Events.MessageCreate, async message => {
                             notifyChannel.viewable &&
                             notifyChannel.permissionsFor(client.user)?.has('SendMessages')
                         ) {
-                            await notifyChannel.send(`${format(lang.userBanned, { username: message.author.tag , banReason: lang.banReason })}.`);
+                            await notifyChannel.send(format(lang.userBanned, { username: message.author.tag , banReason: lang.banReason }));
                         } else {
-                            console.warn(`${format(lang.noPermissionToNotify, { channelName: notifyChannel?.name || 'unknown' })}.`);
+                            console.warn(format(lang.noPermissionToNotify, { channelName: notifyChannel?.name || 'unknown' }));
                         }
 
                     } catch (err) {
-                        console.warn(`${lang.notifyError}`, err.message);
+                        console.warn(lang.notifyError, err.message);
                     }
                 }
 
@@ -161,20 +161,20 @@ client.on(Events.MessageCreate, async message => {
                             }
 
                             if (userMessages.size > 0) {
-                                console.log(`${format(lang.deletedMessagesLo, { count: userMessages.size, username: message.author.tag, channelName: channel.name })}`);
+                                console.log(format(lang.deletedMessagesLo, { count: userMessages.size, username: message.author.tag, channelName: channel.name }));
                             }
 
                         } catch (err) {
-                            console.warn(`${format(lang.deleteError, { channelName: channel.name })}`, err.message);
+                            console.warn(format(lang.deleteError, { channelName: channel.name }), err.message);
                         }
                     }
                 }
             } catch (err) {
-                console.error(`${format(lang.cannotBanUser, { username: message.author.tag })}`, err);
+                console.error(format(lang.cannotBanUser, { username: message.author.tag }), err);
             }
         }
     } catch (err) {
-        console.error(`${lang.messageCreateError}`, err);
+        console.error(format(lang.messageCreateError), err);
     }
 });
 

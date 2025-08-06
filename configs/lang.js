@@ -14,12 +14,12 @@ export default {
 
     banReason                       : "Bot spam",
 
-    banSuccessLog                   : "🚫 Banned {username} in server {guildId}",
+    banSuccessLog                   : "🚫 Banned {username} in server {guildId}.",
     userBanned                      : "🚫 **{username}** has been banned ({banReason}).",
-    noPermissionToNotify            : "⚠️ Bot lacks permission to send messages in channel #{channelName}",
+    noPermissionToNotify            : "⚠️ Bot lacks permission to send messages in channel #{channelName}.",
     notifyError                     : "❌ Failed to send notification: ",
 
-    deletedMessagesLo               : "🧹 Deleted {count} messages from {username} in channel #{channelName}",
+    deletedMessagesLo               : "🧹 Deleted {count} messages from {username} in channel #{channelName}.",
     deleteError                     : "⚠️ Failed to delete messages in #{channelName}: ",
     cannotBanUser                   : "❌ Unable to ban {username}: ",
     messageCreateError              : "❌ Error in MessageCreate: ",
