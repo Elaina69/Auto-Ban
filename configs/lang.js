@@ -21,8 +21,8 @@ export default {
     setupCompleted                  : "✅ Setup completed",
     bannedChannel                   : "Banned channel: <#{channelToBan}>",
     notifyChannel                   : "Notification channel: <#{notifyChannel}>",
-    noBannedAccounts                : "✅ Hiện tại chưa có tài khoản nào bị ban trong server này.",
-    bannedAccountsList              : "📜 **Danh sách tài khoản đã bị ban trong server:**\n{list}",
+    noBannedAccounts                : "✅ Currently, there are no banned accounts in this server.",
+    bannedAccountsList              : "📜 **List of banned accounts in the server:**\n{list}",
 
     // Events when someone sends a message in the banned channel
     banReason                       : "Bot spam",
