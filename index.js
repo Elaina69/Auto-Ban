@@ -18,6 +18,22 @@ const serverConfigFile = path.join(__dirname, 'configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, 'configs/bannedAccountsServers.json');
 const lockFilePath = path.join(__dirname, `${botConfig.botId}.lock`);
 
+// Load config
+let serverConfig = {};
+if (fs.existsSync(serverConfigFile)) {
+    serverConfig = JSON.parse(fs.readFileSync(serverConfigFile, 'utf8'));
+}
+
+// Load banned accounts
+let bannedAccounts = {};
+if (fs.existsSync(bannedAccountsFile)) {
+    bannedAccounts = JSON.parse(fs.readFileSync(bannedAccountsFile, 'utf8'));
+}
+
+function format(template, data = {}) {
+    return template.replace(/{(\w+)}/g, (_, key) => data[key] ?? `{${key}}`);
+}
+
 // Check if a process is running
 function isProcessRunning(pid) {
     try {
@@ -52,22 +68,6 @@ process.on("exit", () => {
 });
 process.on("SIGINT", () => process.exit());
 process.on("SIGTERM", () => process.exit());
-
-// Load config
-let serverConfig = {};
-if (fs.existsSync(serverConfigFile)) {
-    serverConfig = JSON.parse(fs.readFileSync(serverConfigFile, 'utf8'));
-}
-
-// Load banned accounts
-let bannedAccounts = {};
-if (fs.existsSync(bannedAccountsFile)) {
-    bannedAccounts = JSON.parse(fs.readFileSync(bannedAccountsFile, 'utf8'));
-}
-
-function format(template, data = {}) {
-    return template.replace(/{(\w+)}/g, (_, key) => data[key] ?? `{${key}}`);
-}
 
 // Save config
 function saveConfig() {
