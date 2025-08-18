@@ -22,7 +22,7 @@ export default {
     bannedChannel                   : "Banned channel: <#{channelToBan}>",
     notifyChannel                   : "Notification channel: <#{notifyChannel}>",
     noBannedAccounts                : "✅ Currently, there are no banned accounts in this server.",
-    bannedAccountsList              : "📜 **List of banned accounts in the server:**\n{list}",
+    bannedAccountsList              : "📜 **List of banned accounts by bot in the server:**\n{list}",
 
     // Events when someone sends a message in the banned channel
     banReason                       : "Bot spam",
