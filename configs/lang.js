@@ -1,4 +1,12 @@
 export default {
+    // Load or create new bot config
+    noBotConfigFile                 : "⚙️ Bot config does not exist, please provide the following information:",
+    askToken                        : "👉 Enter bot token (String): ",
+    askBotId                        : "👉 Enter bot ID (String): ",
+    askDeleteMessage                : "👉 Delete message after ban? (yes/no): ",
+    askTimeDeleteMessage            : "👉 Time to delete message (ms, e.g. 86400000 = 1 day): ",
+    savedBotConfig                  : "✅ Bot config saved to configs/botConfig.json",
+
     // Check lockfile
     duplicatedLockFile              : "[WARN] Found old lock file (pid=${oldPid}), process no longer exists. Deleting lock file and restarting.",
     lockFileInUse                   : "[ERROR] Bot with botId ${botId} is already running (pid=${oldPid}).",
@@ -27,14 +35,22 @@ export default {
     // Events when someone sends a message in the banned channel
     banReason                       : "Bot spam",
     banSuccessLog                   : "🚫 Banned {username} in server {guildId}.",
+
     noMessageContent                : "No message content.",
     deletedFiles                    : "📎 File from {tag} ({id})",
     downloadFilesErrorLog           : "Cannot download file {att.url}:",
     downloadFilesError              : "⚠️ Cannot download file from {message.author.tag}: ",
+
     noPermissionToNotify            : "⚠️ Bot lacks permission to send messages in channel #{channelName}.",
     notifyError                     : "❌ Failed to send notification: ",
+
     deletedMessagesLog              : "🧹 Deleted {count} messages from {username} in channel #{channelName}.",
     deleteError                     : "⚠️ Failed to delete messages in #{channelName}: ",
-    cannotBanUser                   : "❌ Unable to ban {username}: ",
+
+    cannotBanUserLog                : "❌ Unable to ban {username}: ",
+    cannotBanUser                   : "❌ Unable to ban user",
+    cannotBanUserNotify             : "❌ Unable to ban user {username} in channel #{channelName}. Please check the bot's permissions.",
+    cannotBanUserNotifyError        : "❌ Unable to send ban message:",
+
     messageCreateError              : "❌ Error in MessageCreate: ",
 }

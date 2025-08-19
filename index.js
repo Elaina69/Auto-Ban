@@ -6,7 +6,6 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import botConfig from './configs/botConfig.js'
 import lang from './configs/lang.js';
 
 const token = botConfig.token;
@@ -14,21 +13,61 @@ const botId = botConfig.botId;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const botConfigFile = path.join(__dirname, 'configs/botConfig.json');
 const serverConfigFile = path.join(__dirname, 'configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, 'configs/bannedAccountsServers.json');
 const lockFilePath = path.join(__dirname, `${botConfig.botId}.lock`);
 
-// Load config
+async function askQuestion(query) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise((resolve) => rl.question(query, ans => {
+        rl.close();
+        resolve(ans);
+    }));
+}
+
+// Load or create new bot config
+let botConfig = {};
+if (fs.existsSync(botConfigFile)) {
+    botConfig = JSON.parse(fs.readFileSync(botConfigFile, 'utf8'));
+} 
+else {
+    console.log(lang.noBotConfigFile);
+
+    const token = await askQuestion(lang.askToken);
+    const botId = await askQuestion(lang.askBotId);
+    const deleteMessage = await askQuestion(lang.askDeleteMessage);
+    const timeDeleteMessage = await askQuestion(lang.askTimeDeleteMessage);
+
+    botConfig = {
+        token: token.trim(),
+        botId: botId.trim(),
+        deleteMessage: /^y(es)?$/i.test(deleteMessage.trim()),
+        timeDeleteMessage: parseInt(timeDeleteMessage.trim()) || 86400000 // default 1 days
+    };
+
+    fs.writeFileSync(botConfigFile, JSON.stringify(botConfig, null, 4));
+    console.log(lang.savedBotConfig);
+}
+
+// Load server config
 let serverConfig = {};
 if (fs.existsSync(serverConfigFile)) {
     serverConfig = JSON.parse(fs.readFileSync(serverConfigFile, 'utf8'));
 }
+else saveConfig();
 
 // Load banned accounts
 let bannedAccounts = {};
 if (fs.existsSync(bannedAccountsFile)) {
     bannedAccounts = JSON.parse(fs.readFileSync(bannedAccountsFile, 'utf8'));
 }
+else saveBannedAccounts();
 
 function format(template, data = {}) {
     return template.replace(/{(\w+)}/g, (_, key) => data[key] ?? `{${key}}`);
@@ -140,9 +179,13 @@ client.on(Events.InteractionCreate, async interaction => {
         const channelToBan = interaction.options.getChannel('channeltoban');
         const notifyChannel = interaction.options.getChannel('notifychannel');
 
+        if (!notifyChannel) {
+            notifyChannel = channelToBan;
+        }
+
         serverConfig[guildId] = {
             bannedChannelId: channelToBan.id,
-            notifyChannelId: notifyChannel?.id ?? null
+            notifyChannelId: notifyChannel.id
         };
         saveConfig();
 
@@ -287,7 +330,36 @@ client.on(Events.MessageCreate, async message => {
                     }
                 }
             } catch (err) {
-                console.error(format(lang.cannotBanUser, { username: message.author.tag }), err);
+                console.error(format(lang.cannotBanUserLog, { username: message.author.tag }), err);
+
+                if (settings.notifyChannelId) {
+                    try {
+                        const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId);
+                        if (
+                            notifyChannel &&
+                            notifyChannel.isTextBased?.() &&
+                            notifyChannel.viewable &&
+                            notifyChannel.permissionsFor(client.user)?.has('SendMessages')
+                        ) {
+                            await notifyChannel.send({
+                                embeds: [
+                                    {
+                                        color: 0xffa500,
+                                        title: "⚠️ Cannot Ban User",
+                                        description: format(lang.cannotBanUserNotify, { username: message.author.tag, channelName: message.channel.name }),
+                                        fields: [
+                                            { name: "Channel", value: `<#${message.channel.id}>`, inline: true },
+                                            { name: "Error", value: `\`\`\`${err.message}\`\`\``.substring(0, 1024), inline: false }
+                                        ],
+                                        timestamp: new Date().toISOString(),
+                                    }
+                                ]
+                            });
+                        }
+                    } catch (notifyErr) {
+                        console.warn(lang.cannotBanUserNotifyError, notifyErr.message);
+                    }
+                }
             }
         }
     } catch (err) {
