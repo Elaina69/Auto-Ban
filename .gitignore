@@ -1,5 +1,5 @@
 .git/
 node_modules/
-configs/botConfig.js
-configs/serverConfig.json
+configs/botConfig.json
 configs/bannedAccountsServers.json
+configs/serverConfig.json

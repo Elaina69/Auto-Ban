@@ -5,11 +5,9 @@ import {
 } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import { fileURLToPath } from 'url';
 import lang from './configs/lang.js';
-
-const token = botConfig.token;
-const botId = botConfig.botId;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +15,6 @@ const __dirname = path.dirname(__filename);
 const botConfigFile = path.join(__dirname, 'configs/botConfig.json');
 const serverConfigFile = path.join(__dirname, 'configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, 'configs/bannedAccountsServers.json');
-const lockFilePath = path.join(__dirname, `${botConfig.botId}.lock`);
 
 async function askQuestion(query) {
     const rl = readline.createInterface({
@@ -55,6 +52,9 @@ else {
     console.log(lang.savedBotConfig);
 }
 
+const token = botConfig.token;
+const botId = botConfig.botId;
+
 // Load server config
 let serverConfig = {};
 if (fs.existsSync(serverConfigFile)) {
@@ -84,6 +84,8 @@ function isProcessRunning(pid) {
 }
 
 // Check lockfile
+const lockFilePath = path.join(__dirname, `${botConfig.botId}.lock`);
+
 if (fs.existsSync(lockFilePath)) {
     const oldPid = parseInt(fs.readFileSync(lockFilePath, "utf-8"), 10);
 
