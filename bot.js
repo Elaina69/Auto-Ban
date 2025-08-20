@@ -1,8 +1,14 @@
 import { REST, Routes, SlashCommandBuilder, ChannelType, PermissionFlagsBits } from 'discord.js';
 import lang from './configs/lang.js';
 
+/**
+ * Registers the bot commands with the Discord API.
+ * @param {string} token - The bot token.
+ * @param {string} botId - The bot ID.
+ */
 export async function registerCommands(token, botId) {
     const commands = [
+        // Command: /setup (channel to ban) (channel to notify)
         new SlashCommandBuilder()
             .setName('setup')
             .setDescription(lang.setupDescription)
@@ -19,6 +25,8 @@ export async function registerCommands(token, botId) {
                     .addChannelTypes(ChannelType.GuildText)
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+        // Command: /banlist
         new SlashCommandBuilder()
             .setName('banlist')
             .setDescription(lang.bannedListDescription)
@@ -31,7 +39,8 @@ export async function registerCommands(token, botId) {
         console.log(lang.registeringCommands);
         await rest.put(Routes.applicationCommands(botId), { body: commands });
         console.log(lang.commandRegistered);
-    } catch (err) {
+    } 
+    catch (err) {
         console.error(lang.commandRegisterError, err);
     }
 }

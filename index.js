@@ -28,7 +28,7 @@ const serverConfig = loadServerConfig();
 const bannedAccounts = loadBannedAccounts();
 
 // Setup lockfile
-setupLockfile(botConfig.botId, __dirname, format, lang);
+setupLockfile(botConfig.botId, __dirname, lang);
 
 // Create Discord client
 const client = new Client({

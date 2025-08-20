@@ -3,7 +3,12 @@ import { format } from '../utils/formatLang.js';
 import { ChannelType } from 'discord.js';
 import { saveBannedAccounts } from '../utils/config.js';
 
-// Check if the message should be banned
+/**
+ * Checks if a message should be banned.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {object} serverConfig - The server configuration.
+ * @returns {boolean} - True if the message should be banned, false otherwise.
+ */
 function shouldBan(message, serverConfig) {
     // If the message is from a bot or not in a guild, don't ban
     if (message.author.bot || !message.guild) return false;
@@ -14,11 +19,14 @@ function shouldBan(message, serverConfig) {
     // If no settings found for the guild, don't ban
     if (!settings) return false;
 
-    // Return true if the message is in the banned channel (boolean)
     return message.channel.id === settings.bannedChannelId;
 }
 
-// Ban user and update the banned accounts list
+/**
+ * Bans a user and updates the banned accounts list.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {object} bannedAccounts - The banned accounts.
+ */
 async function banUser(message, bannedAccounts) {
     await message.guild.members.ban(message.author.id, {
         reason: `${lang.banReason}.`
@@ -34,7 +42,12 @@ async function banUser(message, bannedAccounts) {
     }
 }
 
-// Send message to notify channel
+/**
+ * Sends a notification to the specified channel when a user is banned.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {import('discord.js').Client} client - The Discord client.
+ * @param {object} settings - The server settings.
+ */
 async function notifyBan(message, client, settings) {
     const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId);
 
@@ -67,7 +80,13 @@ async function notifyBan(message, client, settings) {
     }
 }
 
-// Send error notification when unable to ban user
+/**
+ * Sends an error notification when unable to ban a user.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {import('discord.js').Client} client - The Discord client.
+ * @param {object} settings - The server settings.
+ * @param {Error} err - The error object.
+ */
 async function notifyBanError(message, client, settings, err) {
     const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId);
 
@@ -95,7 +114,11 @@ async function notifyBanError(message, client, settings, err) {
     }
 }
 
-// Reupload file attachments
+/**
+ * Reuploads file attachments.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {import('discord.js').TextChannel} notifyChannel - The channel to send the reuploaded files to.
+ */
 async function reuploadAttachments(message, notifyChannel) {
     if (message.attachments.size > 0) {
         for (const [_, att] of message.attachments) {
@@ -116,7 +139,12 @@ async function reuploadAttachments(message, notifyChannel) {
     }
 }
 
-// Delete banned user messages
+/**
+ * Deletes messages from a user in all text channels.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {object} botConfig - The bot configuration.
+ * @param {import('discord.js').Client} client - The Discord client.
+ */
 async function deleteUserMessages(message, botConfig, client) {
     const now = Date.now();
     const timeDeleteMessages = now - botConfig.timeDeleteMessage;
@@ -149,6 +177,14 @@ async function deleteUserMessages(message, botConfig, client) {
     }
 }
 
+/**
+ * Handles the message creation event.
+ * @param {import('discord.js').Message} message - The message object.
+ * @param {object} serverConfig - The server configuration.
+ * @param {object} bannedAccounts - The banned accounts.
+ * @param {object} botConfig - The bot configuration.
+ * @param {import('discord.js').Client} client - The Discord client.
+ */
 export default async function handleMessageCreate(message, serverConfig, bannedAccounts, botConfig, client) {
     try {
         if (!shouldBan(message, serverConfig)) return;

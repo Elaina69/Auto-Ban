@@ -10,6 +10,11 @@ const botConfigFile = path.join(__dirname, '../configs/botConfig.json');
 const serverConfigFile = path.join(__dirname, '../configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, '../configs/bannedAccountsServers.json');
 
+/**
+ * Asks a question in the console and returns the answer.
+ * @param {string} query - The question to ask.
+ * @returns {Promise<string>} - The answer provided by the user.
+ */
 async function askQuestion(query) {
     const rl = readline.createInterface({
         input: process.stdin,
@@ -21,6 +26,7 @@ async function askQuestion(query) {
     }));
 }
 
+// Load bot configuration from file
 async function loadBotConfig() {
     if (fs.existsSync(botConfigFile)) {
         return JSON.parse(fs.readFileSync(botConfigFile, 'utf8'));
@@ -28,6 +34,7 @@ async function loadBotConfig() {
     else {
         console.log(lang.noBotConfigFile);
 
+        // Create new bot configuration
         const token = await askQuestion(lang.askToken);
         const botId = await askQuestion(lang.askBotId);
         const deleteMessage = await askQuestion(lang.askDeleteMessage);
@@ -42,32 +49,45 @@ async function loadBotConfig() {
 
         fs.writeFileSync(botConfigFile, JSON.stringify(botConfig, null, 4));
         console.log(lang.savedBotConfig);
+
         return botConfig;
     }
 }
 
+// Load server configuration from file
 function loadServerConfig() {
     if (fs.existsSync(serverConfigFile)) {
         return JSON.parse(fs.readFileSync(serverConfigFile, 'utf8'));
-    } else {
+    } 
+    else {
         saveServerConfig({});
         return {};
     }
 }
 
+/**
+ * Saves the server configuration to a file.
+ * @param {object} serverConfig - The server configuration to save.
+ */
 function saveServerConfig(serverConfig) {
     fs.writeFileSync(serverConfigFile, JSON.stringify(serverConfig, null, 4));
 }
 
+// Load banned accounts from file
 function loadBannedAccounts() {
     if (fs.existsSync(bannedAccountsFile)) {
         return JSON.parse(fs.readFileSync(bannedAccountsFile, 'utf8'));
-    } else {
+    } 
+    else {
         saveBannedAccounts({});
         return {};
     }
 }
 
+/**
+ * Saves the banned accounts to a file.
+ * @param {object} bannedAccounts - The banned accounts to save.
+ */
 function saveBannedAccounts(bannedAccounts) {
     fs.writeFileSync(bannedAccountsFile, JSON.stringify(bannedAccounts, null, 4));
 }
