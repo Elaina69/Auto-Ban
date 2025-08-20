@@ -13,10 +13,12 @@
  - Invite bot: [Invite](https://discord.com/oauth2/authorize?client_id=1402250342040731688)
  - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in text channel to run.
 
- - Use `/setup (channel to ban) (notify channel)` to setup the bot.
+ - Use `/setup (channel to ban) (ban notify channel)` to setup the bot.
 
 ## How to host
  - Clone this repo
+
+ - Install latest version of NodeJS (if can)
 
  - Open terminal(cmd) on this repo, install discord.js
 
@@ -24,18 +26,4 @@
 npm install discord.js
 ```
 
- - Create new file `/configs/botConfig.js`
-
-```javascript
-export default {
-    // Bot token
-    token: string,
-    // Bot id (Application Id)
-    botId: string,
-
-    deleteMessage: true,
-
-    timeDeleteMessage: 3600000,
-}
-```
  - Run `node index.js` to start bot
