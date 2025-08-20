@@ -36,47 +36,28 @@ export default async function handleInteractionCreate(interaction, serverConfig,
         });
     }
 
+    // Command: /banlist
     if (interaction.commandName === 'banlist') {
         const guildId = interaction.guildId;
         const list = bannedAccounts[guildId] || [];
 
-        const pageSize = 10;
-        let page = 0;
-        const totalPages = Math.ceil(list.length / pageSize) || 1;
+        if (list.length === 0) {
+            await interaction.reply({
+                content: lang.noBannedAccounts,
+                flags: MessageFlags.Ephemeral
+            });
+        } else {
+            const lines = [];
+            for (let i = 0; i < list.length; i += 5) {
+                lines.push(list.slice(i, i + 5).join(', '));
+            }
+            
+            const formattedList = lines.join('\n');
 
-        function getPageContent(page) {
-            const start = page * pageSize;
-            const end = start + pageSize;
-            const users = list.slice(start, end).map(acc => `- ${acc}`).join('\n') || lang.noBannedAccounts;
-            return format(lang.bannedAccountsList, { users }) + `\n\nPage ${page + 1}/${totalPages}`;
+            await interaction.reply({
+                content: format(lang.bannedAccountsList, { list: formattedList }),
+                flags: MessageFlags.Ephemeral
+            });
         }
-
-        const replyMsg = await interaction.reply({
-            content: getPageContent(page),
-            fetchReply: true,
-            flags: MessageFlags.SuppressNotifications
-        });
-
-        if (list.length <= pageSize) return;
-
-        // Thêm emoji điều hướng
-        await replyMsg.react('⬅️');
-        await replyMsg.react('➡️');
-
-        // Collector cho emoji
-        const filter = (reaction, user) =>
-            ['⬅️', '➡️'].includes(reaction.emoji.name) && user.id === interaction.user.id;
-        const collector = replyMsg.createReactionCollector({ filter, time: 60000 });
-
-        collector.on('collect', async (reaction, user) => {
-            if (reaction.emoji.name === '⬅️' && page > 0) page--;
-            if (reaction.emoji.name === '➡️' && page < totalPages - 1) page++;
-            await replyMsg.edit({ content: getPageContent(page) });
-            await reaction.users.remove(user.id); // Xóa emoji của user để có thể ấn tiếp
-        });
-
-        collector.on('end', () => {
-            replyMsg.reactions.removeAll().catch(() => {});
-        });
     }
 }
