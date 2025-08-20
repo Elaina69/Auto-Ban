@@ -11,7 +11,7 @@
 
 ## How to setup bot
  - Invite bot: [Invite](https://discord.com/oauth2/authorize?client_id=1402250342040731688)
- - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in text channel to run.
+ - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in all text channels to run.
 
  - Use `/setup (channel to ban) (ban notify channel)` to setup the bot.
 
