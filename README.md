@@ -15,7 +15,7 @@
 
  - Use `/setup (channel to ban) (ban notify channel)` to setup the bot.
 
-## How to host
+## How to self-host
  - Clone this repo
 
  - Install latest version of NodeJS (if can)
