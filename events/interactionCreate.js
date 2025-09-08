@@ -55,7 +55,7 @@ export default async function handleInteractionCreate(interaction, serverConfig,
             const formattedList = lines.join('\n');
 
             await interaction.reply({
-                content: format(lang.bannedAccountsList, { list: formattedList }),
+                content: format(lang.bannedAccountsList, { list: formattedList }) + `\n\n(Total: ${list.length})`,
                 flags: MessageFlags.Ephemeral
             });
         }
