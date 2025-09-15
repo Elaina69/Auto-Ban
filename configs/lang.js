@@ -16,6 +16,8 @@ export default {
     setupChannelToBanDescription    : "Channel to ban users who send messages here.",
     setupNotifyChannelDescription   : "Channel to notify when a user is banned.",
     bannedListDescription           : "List of banned users in this server.",
+    checkBotPermissionDescription   : "Check the bot's permissions in a channel",
+    checkBotPermissionChannelDesc   : "Channel to check (defaults to current channel if not provided)",
 
     // Register slash commands globally
     registeringCommands             : "Registering GLOBAL slash commands...",
@@ -31,6 +33,7 @@ export default {
     notifyChannel                   : "Notification channel: <#{notifyChannel}>",
     noBannedAccounts                : "✅ Currently, there are no banned accounts in this server.",
     bannedAccountsList              : "📜 **List of banned accounts by bot in the server:**\n{list}",
+    botPermissionInChannel          : "🔎 **Bot's permissions in channel <#{channel}>:**",
 
     // Events when someone sends a message in the banned channel
     banReason                       : "Bot spam",

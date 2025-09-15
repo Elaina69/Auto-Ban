@@ -29,7 +29,18 @@ export async function registerCommands(token, botId) {
         // Command: /banlist
         new SlashCommandBuilder()
             .setName('banlist')
-            .setDescription(lang.bannedListDescription)
+            .setDescription(lang.bannedListDescription),
+
+        // Command: /checkperm
+        new SlashCommandBuilder()
+        .setName('checkperm')
+            .setDescription(lang.checkBotPermissionDescription)
+            .addChannelOption(option =>
+                option.setName('channel')
+                    .setDescription(lang.checkBotPermissionChannelDesc)
+                    .setRequired(false)
+                    .addChannelTypes(ChannelType.GuildText)
+            ),
     ].map(cmd => cmd.toJSON());
 
     // Register slash commands globally
