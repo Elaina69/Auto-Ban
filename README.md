@@ -14,6 +14,7 @@
  - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in all text channels to run.
 
  - Use `/setup (channel to ban) (ban notify channel)` to setup the bot.
+ - Use `/checkperm` to check if the bot have required permissions in that channel or not
 
 ## How to self-host
  - Clone this repo
