@@ -5,6 +5,8 @@ export default {
     askBotId                        : "👉 Enter bot ID (String): ",
     askDeleteMessage                : "👉 Delete message after ban? (yes/no): ",
     askTimeDeleteMessage            : "👉 Time to delete message (ms, e.g. 86400000 = 1 day): ",
+    askChannelSpamThreshold         : "👉 Number of channels to consider spam in the time window: ",
+    askSpamWindowMs                 : "👉 Time window to track spam (ms, e.g. 6000 = 6 seconds): ",
     savedBotConfig                  : "✅ Bot config saved to configs/botConfig.json",
 
     // Check lockfile

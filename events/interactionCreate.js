@@ -1,7 +1,7 @@
 import lang from '../configs/lang.js';
 import { format } from '../utils/formatLang.js';
 import { MessageFlags, PermissionFlagsBits, ChannelType } from 'discord.js';
-import { saveServerConfig } from '../utils/config.js';
+import { loadBotConfig, saveServerConfig } from '../utils/config.js';
 import handleMessageCreate from './messageCreate.js';
 
 /**
@@ -94,8 +94,12 @@ export default async function handleInteractionCreate(interaction, serverConfig,
 
     // Command: /bantest
     if (interaction.commandName === 'bantest') {
+        const botConfig = await loadBotConfig();
+
         const mode = interaction.options.getString('mode') || 'normal';
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({
+            flags: MessageFlags.Ephemeral
+        });
 
         const guild = interaction.guild;
         const user = interaction.user;
@@ -114,8 +118,11 @@ export default async function handleInteractionCreate(interaction, serverConfig,
 
         if (mode === 'normal') {
             await interaction.editReply(lang.testingAutoBan);
-            await handleMessageCreate(fakeMessage, serverConfig, bannedAccounts);
-            await interaction.followUp({ content: lang.testNormalModeDone, ephemeral: true });
+            await handleMessageCreate(fakeMessage, serverConfig, bannedAccounts, botConfig, client);
+            await interaction.followUp({ 
+                content: lang.testNormalModeDone, 
+                flags: MessageFlags.Ephemeral
+            });
         }
 
         if (mode === 'multichannel') {
@@ -133,10 +140,13 @@ export default async function handleInteractionCreate(interaction, serverConfig,
 
             for (const ch of channels) {
                 const fakeSpamMsg = { ...fakeMessage, channel: ch, content: 'Spam test message' };
-                await handleMessageCreate(fakeSpamMsg, serverConfig, bannedAccounts);
+                await handleMessageCreate(fakeSpamMsg, serverConfig, bannedAccounts, botConfig, client);
             }
 
-            await interaction.followUp({ content: lang.testMultiChannelDone, ephemeral: true });
+            await interaction.followUp({ 
+                content: lang.testMultiChannelDone,
+                flags: MessageFlags.Ephemeral
+            });
         }
     }
 }

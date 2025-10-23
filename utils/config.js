@@ -40,12 +40,16 @@ async function loadBotConfig() {
         const botId = await askQuestion(lang.askBotId);
         const deleteMessage = await askQuestion(lang.askDeleteMessage);
         const timeDeleteMessage = await askQuestion(lang.askTimeDeleteMessage);
+        const channelSpamThreshold = await askQuestion(lang.askChannelSpamThreshold);
+        const spamWindowMs = await askQuestion(lang.askSpamWindowMs);
 
         const botConfig = {
             token: token.trim(),
             botId: botId.trim(),
             deleteMessage: /^y(es)?$/i.test(deleteMessage.trim()),
-            timeDeleteMessage: parseInt(timeDeleteMessage.trim()) || 86400000
+            timeDeleteMessage: parseInt(timeDeleteMessage.trim()) || 86400000,
+            channelSpamThreshold: parseInt(channelSpamThreshold.trim()) || 3,
+            spamWindowMs: parseInt(spamWindowMs.trim()) || 6000
         };
 
         fs.writeFileSync(botConfigFile, JSON.stringify(botConfig, null, 4));
