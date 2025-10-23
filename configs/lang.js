@@ -35,6 +35,23 @@ export default {
     bannedAccountsList              : "📜 **List of banned accounts by bot in the server:**\n{list}",
     botPermissionInChannel          : "🔎 **Bot's permissions in channel <#{channel}>:**",
 
+    // Permission names list
+    permViewChannel                 : "View Channel",
+    permSendMessages                : "Send Messages",
+    permReadMessageHistory          : "Read Message History",
+    permAddReactions                : "Add Reactions",
+    permManageMessages              : "Manage Messages",
+    permBanMembers                  : "Ban Members",
+
+    // Ban messages
+    userBannedTitle                : "🚫 User Banned",
+    userField                      : "User",
+    reasonField                    : "Reason",
+    messageContentField            : "Message Content",
+    channelField                   : "Channel",
+    cannotBanUserTitle             : "⚠️ Cannot Ban User",
+    errorField                     : "Error",
+
     // Events when someone sends a message in the banned channel
     banReason                       : "Bot spam",
     banSuccessLog                   : "🚫 Banned {username} in server {guildId}.",
@@ -56,4 +73,11 @@ export default {
     cannotBanUserNotifyError        : "❌ Unable to send ban message:",
 
     messageCreateError              : "❌ Error in MessageCreate: ",
+
+    // Test commands
+    testingAutoBan                  : "🚧 Testing auto ban...",
+    testNormalModeDone              : "✅ Normal mode test completed.",
+    testingMultiChannelSpam         : "🚧 Testing multi-channel spam...",
+    needAtLeast3Channels            : "⚠️ Need at least 3 channels to test.",
+    testMultiChannelDone            : "✅ Multi-channel spam test completed (3 channels)."
 }

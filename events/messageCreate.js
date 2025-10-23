@@ -3,6 +3,9 @@ import { format } from '../utils/formatLang.js';
 import { ChannelType } from 'discord.js';
 import { saveBannedAccounts } from '../utils/config.js';
 
+// Temporary memory to store recent messages for multi-channel spam detection
+const messageHistory = new Map();
+
 /**
  * Checks if a message should be banned.
  * @param {import('discord.js').Message} message - The message object.
@@ -23,6 +26,53 @@ function shouldBan(message, serverConfig) {
 }
 
 /**
+ * Detects multi-channel spam.
+ * @param {import('discord.js').Message} message
+ * @param {object} botConfig
+ * @returns {array|null} - List of channels where the user spammed, or null if not spam
+ */
+function detectMultiChannelSpam(message, botConfig) {
+    const now = Date.now();
+    const userId = message.author.id;
+    const content = message.content.trim();
+
+    if (!content) return null;
+
+    if (!messageHistory.has(userId)) {
+        messageHistory.set(userId, []);
+    }
+
+    const history = messageHistory.get(userId);
+
+    // Add new message to history
+    history.push({
+        channelId: message.channel.id,
+        content,
+        timestamp: now
+    });
+
+    // Remove old messages
+    const window = botConfig.spamWindowMs
+    const threshold = botConfig.channelSpamThreshold
+    const recent = history.filter(msg => now - msg.timestamp <= window);
+    messageHistory.set(userId, recent);
+
+    // Check multi-channel spam (spam same content in >= threshold channels)
+    const distinctChannels = new Set(
+        recent
+            .filter(msg => msg.content === content)
+            .map(msg => msg.channelId)
+    );
+
+    if (distinctChannels.size >= threshold) {
+        messageHistory.delete(userId); // reset
+        return Array.from(distinctChannels);
+    }
+
+    return null;
+}
+
+/**
  * Bans a user and updates the banned accounts list.
  * @param {import('discord.js').Message} message - The message object.
  * @param {object} bannedAccounts - The banned accounts.
@@ -32,10 +82,7 @@ async function banUser(message, bannedAccounts) {
         reason: `${lang.banReason}.`
     });
 
-    // Create banned accounts list if not exists
     if (!bannedAccounts[message.guild.id]) bannedAccounts[message.guild.id] = [];
-
-    // Add user to banned accounts list if not already present
     if (!bannedAccounts[message.guild.id].includes(message.author.tag)) {
         bannedAccounts[message.guild.id].push(message.author.tag);
         saveBannedAccounts(bannedAccounts);
@@ -47,9 +94,10 @@ async function banUser(message, bannedAccounts) {
  * @param {import('discord.js').Message} message - The message object.
  * @param {import('discord.js').Client} client - The Discord client.
  * @param {object} settings - The server settings.
+ * @param {array} extraChannels - Additional channels where the user spammed.
  */
-async function notifyBan(message, client, settings) {
-    const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId);
+async function notifyBan(message, client, settings, extraChannels = []) {
+    const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId || settings.bannedChannelId);
 
     // Check if the notify channel is valid
     if (
@@ -58,17 +106,29 @@ async function notifyBan(message, client, settings) {
         notifyChannel.viewable &&
         notifyChannel.permissionsFor(client.user)?.has('SendMessages')
     ) {
-        let content = message.content || lang.noMessageContent;
+        const content = message.content || lang.noMessageContent;
+
+        // List all channels where the user spammed
+        let channelsList = [`<#${message.channel.id}>`];
+        if (extraChannels.length > 0) {
+            for (const id of extraChannels) {
+                if (id !== message.channel.id) {
+                    const ch = message.guild.channels.cache.get(id);
+                    if (ch) channelsList.push(`<#${id}>`);
+                }
+            }
+        }
+
         await notifyChannel.send({
             embeds: [
                 {
                     color: 0xff0000,
-                    title: "🚫 User Banned",
+                    title: lang.userBannedTitle,
                     fields: [
-                        { name: "User", value: `${message.author.tag} (<@${message.author.id}>)`, inline: false },
-                        { name: "Reason", value: lang.banReason, inline: false },
-                        { name: "Message Content", value: content.substring(0, 1024) || lang.noMessageContent, inline: false },
-                        { name: "Channel", value: `<#${message.channel.id}>`, inline: true }
+                        { name: lang.userField, value: `${message.author.tag} (<@${message.author.id}>)`, inline: false },
+                        { name: lang.reasonField, value: lang.banReason, inline: false },
+                        { name: lang.messageContentField, value: content.substring(0, 1024) || lang.noMessageContent, inline: false },
+                        { name: lang.channelField, value: channelsList.join(', '), inline: false }
                     ],
                     timestamp: new Date().toISOString(),
                 }
@@ -88,9 +148,8 @@ async function notifyBan(message, client, settings) {
  * @param {Error} err - The error object.
  */
 async function notifyBanError(message, client, settings, err) {
-    const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId);
-
     // Check if the notify channel is valid
+    const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId || settings.bannedChannelId);
     if (
         notifyChannel &&
         notifyChannel.isTextBased?.() &&
@@ -101,11 +160,14 @@ async function notifyBanError(message, client, settings, err) {
             embeds: [
                 {
                     color: 0xffa500,
-                    title: "⚠️ Cannot Ban User",
-                    description: format(lang.cannotBanUserNotify, { username: message.author.tag, channelName: message.channel.name }),
+                    title: lang.cannotBanUserTitle,
+                    description: format(lang.cannotBanUserNotify, {
+                        username: message.author.tag,
+                        channelName: message.channel.name
+                    }),
                     fields: [
-                        { name: "Channel", value: `<#${message.channel.id}>`, inline: true },
-                        { name: "Error", value: `\`\`\`${err.message}\`\`\``.substring(0, 1024), inline: false }
+                        { name: lang.channelField, value: `<#${message.channel.id}>`, inline: true },
+                        { name: lang.errorField, value: `\`\`\`${err.message}\`\`\``.substring(0, 1024) }
                     ],
                     timestamp: new Date().toISOString(),
                 }
@@ -140,21 +202,25 @@ async function reuploadAttachments(message, notifyChannel) {
 }
 
 /**
- * Deletes messages from a user in all text channels.
+ * Deletes messages from a user in specific channels or all channels if not specified.
  * @param {import('discord.js').Message} message - The message object.
  * @param {object} botConfig - The bot configuration.
  * @param {import('discord.js').Client} client - The Discord client.
+ * @param {string[]} extraChannels - Optional. List of channel IDs where the user spammed.
  */
-async function deleteUserMessages(message, botConfig, client) {
+async function deleteUserMessages(message, botConfig, client, extraChannels = []) {
     const now = Date.now();
     const timeDeleteMessages = now - botConfig.timeDeleteMessage;
 
-    for (const [channelId, channel] of message.guild.channels.cache) {
-        // Check if the channel is a text channel and if the bot has permission to manage messages
-        if (channel.type !== ChannelType.GuildText || 
-            !channel.viewable || 
-            !channel.permissionsFor(client.user)?.has('ManageMessages')
-        ) continue;
+    // If there is a spam channel list, only scan those channels
+    const targetChannels = extraChannels.length > 0
+        ? extraChannels
+        : Array.from(message.guild.channels.cache.keys());
+
+    for (const channelId of targetChannels) {
+        const channel = message.guild.channels.cache.get(channelId);
+        if (!channel || channel.type !== ChannelType.GuildText) continue;
+        if (!channel.viewable || !channel.permissionsFor(client.user)?.has('ManageMessages')) continue;
 
         try {
             const messages = await channel.messages.fetch({ limit: 100 });
@@ -168,11 +234,14 @@ async function deleteUserMessages(message, botConfig, client) {
             }
 
             if (userMessages.size > 0) {
-                console.log(format(lang.deletedMessagesLog, { count: userMessages.size, username: message.author.tag, channelName: channel.name }));
+                console.log(format(lang.deletedMessagesLog, {
+                    count: userMessages.size,
+                    username: message.author.tag,
+                    channelName: channel.name
+                }));
             }
-        } 
-        catch (err) {
-            console.warn(format(lang.deleteError, { channelName: channel.name }), err.message);
+        } catch (err) {
+            console.warn(format(lang.deleteError, { channelName: channel?.name || channelId }), err.message);
         }
     }
 }
@@ -187,25 +256,27 @@ async function deleteUserMessages(message, botConfig, client) {
  */
 export default async function handleMessageCreate(message, serverConfig, bannedAccounts, botConfig, client) {
     try {
-        if (!shouldBan(message, serverConfig)) return;
-
         const settings = serverConfig[message.guild.id];
+        if (!settings) return;
+
+        // Spam detection
+        const spamChannels = detectMultiChannelSpam(message, botConfig);
+        const isBannedChannel = shouldBan(message, serverConfig);
+
+        if (!isBannedChannel && !spamChannels) return;
 
         try {
             await banUser(message, bannedAccounts);
             console.log(format(lang.banSuccessLog, { username: message.author.tag, guildId: message.guild.id }));
-            if (settings.notifyChannelId) {
-                await notifyBan(message, client, settings);
-            }
+
+            await notifyBan(message, client, settings, spamChannels || []);
             if (botConfig.deleteMessage) {
-                await deleteUserMessages(message, botConfig, client);
+                await deleteUserMessages(message, botConfig, client, spamChannels || []);
             }
         } 
         catch (err) {
             console.error(format(lang.cannotBanUserLog, { username: message.author.tag }), err);
-            if (settings.notifyChannelId) {
-                await notifyBanError(message, client, settings, err);
-            }
+            await notifyBanError(message, client, settings, err);
         }
     } 
     catch (err) {

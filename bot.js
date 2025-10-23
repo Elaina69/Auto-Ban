@@ -33,7 +33,7 @@ export async function registerCommands(token, botId) {
 
         // Command: /checkperm
         new SlashCommandBuilder()
-        .setName('checkperm')
+            .setName('checkperm')
             .setDescription(lang.checkBotPermissionDescription)
             .addChannelOption(option =>
                 option.setName('channel')
@@ -41,6 +41,22 @@ export async function registerCommands(token, botId) {
                     .setRequired(false)
                     .addChannelTypes(ChannelType.GuildText)
             ),
+
+        // Command: /bantest
+        new SlashCommandBuilder()
+            .setName('bantest')
+            .setDescription('Test the auto-ban functionality.')
+            .addStringOption(option =>
+                option
+                    .setName('mode')
+                    .setDescription('Select test mode (normal or multichannel)')
+                    .setRequired(false)
+                    .addChoices(
+                        { name: 'normal', value: 'normal' },
+                        { name: 'multichannel', value: 'multichannel' }
+                    )
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     ].map(cmd => cmd.toJSON());
 
     // Register slash commands globally

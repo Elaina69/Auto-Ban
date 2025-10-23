@@ -1,7 +1,8 @@
 import lang from '../configs/lang.js';
 import { format } from '../utils/formatLang.js';
-import { MessageFlags, PermissionFlagsBits } from 'discord.js';
+import { MessageFlags, PermissionFlagsBits, ChannelType } from 'discord.js';
 import { saveServerConfig } from '../utils/config.js';
+import handleMessageCreate from './messageCreate.js';
 
 /**
  * Handles interaction events.
@@ -46,12 +47,13 @@ export default async function handleInteractionCreate(interaction, serverConfig,
                 content: lang.noBannedAccounts,
                 flags: MessageFlags.Ephemeral
             });
-        } else {
+        } 
+        else {
             const lines = [];
             for (let i = 0; i < list.length; i += 5) {
                 lines.push(list.slice(i, i + 5).join(', '));
             }
-            
+
             const formattedList = lines.join('\n');
 
             await interaction.reply({
@@ -61,22 +63,22 @@ export default async function handleInteractionCreate(interaction, serverConfig,
         }
     }
 
+    // Command: /checkperm
     if (interaction.commandName === 'checkperm') {
         // Get the channel to check permissions, default to current channel if not provided
-        let channel = interaction.options.getChannel('channel');
-        if (!channel) channel = interaction.channel;
+        let channel = interaction.options.getChannel('channel') || interaction.channel;
 
         // Get the bot's permissions in that channel
         const permissions = channel.permissionsFor(interaction.client.user);
 
         // List of permissions to check
         const requiredPerms = [
-            { name: 'View Channel', perm: PermissionFlagsBits.ViewChannel },
-            { name: 'Send Messages', perm: PermissionFlagsBits.SendMessages },
-            { name: 'Read Message History', perm: PermissionFlagsBits.ReadMessageHistory },
-            { name: 'Add Reactions', perm: PermissionFlagsBits.AddReactions },
-            { name: 'Manage Messages', perm: PermissionFlagsBits.ManageMessages },
-            { name: 'Ban Members', perm: PermissionFlagsBits.BanMembers }
+            { name: lang.permViewChannel, perm: PermissionFlagsBits.ViewChannel },
+            { name: lang.permSendMessages, perm: PermissionFlagsBits.SendMessages },
+            { name: lang.permReadMessageHistory, perm: PermissionFlagsBits.ReadMessageHistory },
+            { name: lang.permAddReactions, perm: PermissionFlagsBits.AddReactions },
+            { name: lang.permManageMessages, perm: PermissionFlagsBits.ManageMessages },
+            { name: lang.permBanMembers, perm: PermissionFlagsBits.BanMembers }
         ];
 
         let result = format(lang.botPermissionInChannel, { channel: channel }) + '\n';
@@ -88,5 +90,53 @@ export default async function handleInteractionCreate(interaction, serverConfig,
             content: result,
             flags: MessageFlags.Ephemeral
         });
+    }
+
+    // Command: /bantest
+    if (interaction.commandName === 'bantest') {
+        const mode = interaction.options.getString('mode') || 'normal';
+        await interaction.deferReply({ ephemeral: true });
+
+        const guild = interaction.guild;
+        const user = interaction.user;
+        const client = interaction.client;
+
+        // Simulated message for testing
+        const fakeMessage = {
+            author: user,
+            guild,
+            channel: interaction.channel,
+            content: 'Test spam message',
+            attachments: new Map(),
+            createdTimestamp: Date.now(),
+            async delete() {}
+        };
+
+        if (mode === 'normal') {
+            await interaction.editReply(lang.testingAutoBan);
+            await handleMessageCreate(fakeMessage, serverConfig, bannedAccounts);
+            await interaction.followUp({ content: lang.testNormalModeDone, ephemeral: true });
+        }
+
+        if (mode === 'multichannel') {
+            await interaction.editReply(lang.testingMultiChannelSpam);
+            const channels = guild.channels.cache.filter(
+                ch => ch.type === ChannelType.GuildText &&
+                    ch.viewable &&
+                    ch.permissionsFor(client.user)?.has('SendMessages')
+            ).first(3);
+
+            if (channels.length < 3) {
+                await interaction.followUp(lang.needAtLeast3Channels);
+                return;
+            }
+
+            for (const ch of channels) {
+                const fakeSpamMsg = { ...fakeMessage, channel: ch, content: 'Spam test message' };
+                await handleMessageCreate(fakeSpamMsg, serverConfig, bannedAccounts);
+            }
+
+            await interaction.followUp({ content: lang.testMultiChannelDone, ephemeral: true });
+        }
     }
 }
