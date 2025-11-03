@@ -13,10 +13,13 @@ import handleInteractionCreate from './events/interactionCreate.js';
 import handleMessageCreate from './events/messageCreate.js';
 
 // Import bot's commands
-import { registerCommands } from './bot.js';
+import { registerCommands } from './commands.js';
 
 // Import language file
 import lang from './configs/lang.js';
+
+// Import logger
+import './utils/logger.js';
 
 // Setup file paths
 const __filename = fileURLToPath(import.meta.url);

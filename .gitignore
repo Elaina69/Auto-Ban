@@ -3,3 +3,4 @@ node_modules/
 configs/botConfig.json
 configs/bannedAccountsServers.json
 configs/serverConfig.json
+logs/
