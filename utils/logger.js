@@ -21,7 +21,7 @@ export class Logger {
     write(type, ...args) {
         const ts = new Date().toLocaleTimeString();
         const line = `[${ts}] [${type}] ${args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')}\n`;
-        const file = this._getLogFilePath();
+        const file = this.getLogFilePath();
         fs.appendFile(file, line, (err) => { if (err) process.stderr.write('Logger write error: ' + err.message + '\n'); });
     }
 
