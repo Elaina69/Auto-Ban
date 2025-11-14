@@ -34,7 +34,7 @@ export default {
     bannedChannel                   : "Banned channel: <#{channelToBan}>",
     notifyChannel                   : "Notification channel: <#{notifyChannel}>",
     noBannedAccounts                : "✅ Currently, there are no banned accounts in this server.",
-    bannedAccountsList              : "📜 **List of banned accounts by bot in the server:**\n{list}",
+    bannedAccountsList              : "📜 **List of banned accounts by bot in the server:**",
     botPermissionInChannel          : "🔎 **Bot's permissions in channel <#{channel}>:**",
 
     // Permission names list

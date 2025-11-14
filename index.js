@@ -1,25 +1,25 @@
 // Import Discord Lib
 import { Client, GatewayIntentBits, Events } from 'discord.js';
-
 // Import Utils
-import { loadBotConfig, loadServerConfig, loadBannedAccounts } from './utils/config.js';
+import { loadBotConfig } from './utils/configManager.js';
 import { setupLockfile } from './utils/lockfile.js';
 import { format } from './utils/formatLang.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
 // Import bot's events
-import handleInteractionCreate from './events/interactionCreate.js';
+import HandleInteractionCreate from './events/interactionCreate.js';
 import handleMessageCreate from './events/messageCreate.js';
-
 // Import bot's commands
-import { registerCommands } from './commands.js';
-
+import { registerCommands } from './events/commands/commands.js';
 // Import language file
 import lang from './configs/lang.js';
-
 // Import logger
-import './utils/logger.js';
+import { Logger } from './utils/logger.js';
+
+
+// Initialize logger
+const logger = new Logger();
+logger.hookConsole();
 
 // Setup file paths
 const __filename = fileURLToPath(import.meta.url);
@@ -27,8 +27,6 @@ const __dirname = path.dirname(__filename);
 
 // Load bot's config
 const botConfig = await loadBotConfig();
-const serverConfig = loadServerConfig();
-const bannedAccounts = loadBannedAccounts();
 
 // Setup lockfile
 setupLockfile(botConfig.botId, __dirname, lang);
@@ -52,13 +50,14 @@ client.once(Events.ClientReady, () => {
 });
 
 // Handle interactions
-client.on(Events.InteractionCreate, interaction =>
-    handleInteractionCreate(interaction, serverConfig, bannedAccounts)
-);
+client.on(Events.InteractionCreate, interaction => {
+    const handleInteractionCreate = new HandleInteractionCreate();
+    handleInteractionCreate.createCommandsInteraction(interaction);
+});
 
 // Handle messages
 client.on(Events.MessageCreate, message =>
-    handleMessageCreate(message, serverConfig, bannedAccounts, botConfig, client)
+    handleMessageCreate(message, client)
 );
 
 // Login bot to Discord

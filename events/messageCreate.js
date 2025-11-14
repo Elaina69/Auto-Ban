@@ -1,7 +1,7 @@
 import lang from '../configs/lang.js';
 import { format } from '../utils/formatLang.js';
 import { ChannelType } from 'discord.js';
-import { saveBannedAccounts } from '../utils/config.js';
+import { saveBannedAccounts, loadBannedAccounts, loadServerConfig, loadBotConfig } from '../utils/configManager.js';
 
 // Temporary memory to store recent messages for multi-channel spam detection
 const messageHistory = new Map();
@@ -249,12 +249,13 @@ async function deleteUserMessages(message, botConfig, client, extraChannels = []
 /**
  * Handles the message creation event.
  * @param {import('discord.js').Message} message - The message object.
- * @param {object} serverConfig - The server configuration.
- * @param {object} bannedAccounts - The banned accounts.
- * @param {object} botConfig - The bot configuration.
  * @param {import('discord.js').Client} client - The Discord client.
  */
-export default async function handleMessageCreate(message, serverConfig, bannedAccounts, botConfig, client) {
+export default async function handleMessageCreate(message, client) {
+    const serverConfig = loadServerConfig();
+    const bannedAccounts = await loadBannedAccounts();
+    const botConfig = await loadBotConfig();
+
     try {
         const settings = serverConfig[message.guild.id];
         if (!settings) return;

@@ -1,5 +1,5 @@
 import { REST, Routes, SlashCommandBuilder, ChannelType, PermissionFlagsBits } from 'discord.js';
-import lang from './configs/lang.js';
+import lang from '../../configs/lang.js';
 
 /**
  * Registers the bot commands with the Discord API.
