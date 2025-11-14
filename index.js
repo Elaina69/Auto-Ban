@@ -7,7 +7,7 @@ import { format } from './utils/formatLang.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 // Import bot's events
-import HandleInteractionCreate from './events/interactionCreate.js';
+import { HandleInteractionCreate } from './events/interactionCreate.js';
 import handleMessageCreate from './events/messageCreate.js';
 // Import bot's commands
 import { registerCommands } from './events/commands/commands.js';
