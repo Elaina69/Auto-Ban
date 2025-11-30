@@ -15,11 +15,11 @@
 
 ## Commands
  - `/setup (channel to ban) (ban notify channel)`: Setup the bot.
- - `/checkperm (channel - not required)`: Check if the bot have required permissions in that channel or not
- - `/banlist`: Return a list of accounts banned by bot
- - `/addadmin (user)`: Add a admin/mod to list for "contact" path in ban message   
- - `/deleteadmin (user)`: Remove a admin/mod from list
- - `/adminlist`: Return a admin/mod list for "contact" path in ban message
+ - `/checkperm (channel - not required)`: Check if the bot has the required permissions in that channel.
+ - `/banlist`: Returns a list of accounts banned by the bot.
+ - `/addadmin (user)`: Adds an admin/mod to the "contact" section of the ban message.
+ - `/deleteadmin (user)`: Removes an admin/moderator from the list.
+ - `/adminlist`: Returns a list of admins/moderators for the "contact" section of the ban message.
 
 ## How to self-host
  - Clone this repo
