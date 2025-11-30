@@ -110,9 +110,10 @@ export class BanManager {
      * @param {string} serverName - Server name.
      * @param {array} extraChannels - Additional channels where the user spammed.
      * @param {boolean} isDM - Is this for DM (true) or channel (false).
+     * @param {array} admins - List of admin user IDs for contact.
      * @returns {object} - Embed object
      */
-    createBanEmbed(message, serverName, extraChannels = [], isDM = false) {
+    createBanEmbed(message, serverName, extraChannels = [], isDM = false, admins = []) {
         const content = message.content || lang.noMessageContent;
 
         let channelsList = [`<#${message.channel.id}>`];
@@ -133,6 +134,14 @@ export class BanManager {
             { name: lang.serverField, value: serverName, inline: false }
         ];
 
+        // Add contact admins field if there are admins and it's a DM
+        if (isDM && admins.length > 0) {
+            const adminMentions = admins.map(id => `<@${id}>`).join(', ');
+            fields.push({ name: lang.contactAdminsField, value: adminMentions, inline: false });
+        } else if (isDM && admins.length === 0) {
+            fields.push({ name: lang.contactAdminsField, value: lang.noAdminsAvailable, inline: false });
+        }
+
         return {
             color: 0xff0000,
             title: isDM ? lang.youBannedTitle : lang.userBannedTitle,
@@ -152,7 +161,7 @@ export class BanManager {
         const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId || settings.bannedChannelId);
 
         if (notifyChannel && notifyChannel.isTextBased?.()) {
-            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, false);
+            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, false, settings.admins || []);
             await this.sendNotification(embed, notifyChannel);
 
             // Reupload attachments if exist (to channel)
@@ -165,10 +174,10 @@ export class BanManager {
      * @param {import('discord.js').Message} message - The message object.
      * @param {array} extraChannels - Additional channels where the user spammed.
      */
-    async notifyUserBan(message, extraChannels = []) {
+    async notifyUserBan(message, settings, extraChannels = []) {
         try {
             const user = message.author;
-            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, true);
+            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, true, settings.admins || []);
             await this.sendNotification(embed, user);
             // Reupload attachments if exist (to user DM)
             await this.reuploadAttachments(message, null, user);

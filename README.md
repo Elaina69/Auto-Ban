@@ -13,8 +13,13 @@
  - Invite bot: [Invite](https://discord.com/oauth2/authorize?client_id=1402250342040731688)
  - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in all text channels to run.
 
- - Use `/setup (channel to ban) (ban notify channel)` to setup the bot.
- - Use `/checkperm` to check if the bot have required permissions in that channel or not
+## Commands
+ - `/setup (channel to ban) (ban notify channel)`: Setup the bot.
+ - `/checkperm (channel - not required)`: Check if the bot have required permissions in that channel or not
+ - `/banlist`: Return a list of accounts banned by bot
+ - `/addadmin (user)`: Add a admin/mod to list for "contact" path in ban message   
+ - `/deleteadmin (user)`: Remove a admin/mod from list
+ - `/adminlist`: Return a admin/mod list for "contact" path in ban message
 
 ## How to self-host
  - Clone this repo

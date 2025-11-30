@@ -25,7 +25,6 @@ export async function registerCommands(token, botId) {
                     .addChannelTypes(ChannelType.GuildText)
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
         // Command: /banlist
         new SlashCommandBuilder()
             .setName('banlist')
@@ -41,7 +40,6 @@ export async function registerCommands(token, botId) {
                     .setRequired(false)
                     .addChannelTypes(ChannelType.GuildText)
             ),
-
         // Command: /bantest
         new SlashCommandBuilder()
             .setName('bantest')
@@ -57,6 +55,33 @@ export async function registerCommands(token, botId) {
                     )
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /addAdmin
+        new SlashCommandBuilder()
+            .setName('addadmin')
+            .setDescription("Add admin/mod's name to the list for ban message.")
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription("User to be added as admin/mod")
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /deleteAdmin
+        new SlashCommandBuilder()
+            .setName('deleteadmin')
+            .setDescription("Delete admin/mod's name from the list for ban message.")
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription("User to be removed from admin/mod list")
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /adminlist
+        new SlashCommandBuilder()
+            .setName('adminlist')
+            .setDescription('List all admins/moderators for the server.')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     ].map(cmd => cmd.toJSON());
 
     // Register slash commands globally

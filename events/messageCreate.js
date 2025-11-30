@@ -28,7 +28,7 @@ export default async function handleMessageCreate(message, client) {
 
         try {
             // Send DM to banned user
-            await banManager.notifyUserBan(message, spamChannels || []);
+            await banManager.notifyUserBan(message, settings, spamChannels || []);
 
             // Ban user
             await banManager.banUser(message, bannedAccounts);

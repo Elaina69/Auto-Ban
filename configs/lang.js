@@ -54,6 +54,27 @@ export default {
     needAtLeast3Channels            : "⚠️ Need at least 3 channels to test.",
     testMultiChannelDone            : "✅ Multi-channel spam test completed (3 channels).",
 
+     // events/commands/addAdmin.js
+    addAdminDescription             : "Add an admin or moderator to the contact list for banned users.",
+    addAdminUserDescription         : "The user to add as admin/moderator.",
+    adminAdded                      : "✅ Added {user} as admin/moderator.",
+    adminAlreadyExists              : "⚠️ {user} is already an admin/moderator.",
+
+    // events/commands/deleteAdmin.js
+    deleteAdminDescription          : "Remove an admin or moderator from the contact list.",
+    deleteAdminUserDescription      : "The user to remove from admin/moderator list.",
+    adminRemoved                    : "✅ Removed {user} from admin/moderator list.",
+    adminNotFound                   : "⚠️ {user} is not in the admin/moderator list.",
+
+    // events/commands/adminList.js
+    noPermissionToViewAdmins        : "❌ You do not have permission to view the admin/moderator list.",
+    adminListTitle                  : "📋 Admin/Moderator List",
+    adminListDescription            : "List of admins/moderators for ban message:",
+    noAdminsAvailable               : "No admins/mods available for ban message.",
+    adminField                      : "Admins/Moderators",
+    totalAdmins                     : "Total: {count}",
+    adminListCommandError           : "❌ Error in adminList command: ",
+
     // events/_banManager.js
     banReason                       : "Bot spam",
     deletedFiles                    : "📎 File from {tag} ({id})",
@@ -67,6 +88,8 @@ export default {
     messageContentField             : "Message Content",
     channelField                    : "Channel",
     serverField                     : "Server",
+    contactAdminsField              : "Contact Admins/Mods",
+    noAdminsAvailable               : "No admins/mods available for contact.",
     youBannedTitle                  : "🚫 You Have Been Banned",
     userBannedTitle                 : "🚫 User Banned",
     youBannedDescription            : "You have been banned from the server {serverName} for spamming.",
