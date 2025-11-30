@@ -1,12 +1,12 @@
 import { MessageFlags, ChannelType } from 'discord.js';
 import lang from '../../configs/lang.js';
-import { loadBotConfig, loadBannedAccounts, loadServerConfig } from '../../utils/configManager.js';
+import { configManager } from '../../utils/configManager.js';
 import handleMessageCreate from '../messageCreate.js';
 
 export async function banTestCommand(interaction) {
-    const botConfig = await loadBotConfig();
-    const bannedAccounts = await loadBannedAccounts();
-    const serverConfig = await loadServerConfig();
+    const botConfig = await configManager.loadBotConfig();
+    const bannedAccounts = await configManager.loadBannedAccounts();
+    const serverConfig = await configManager.loadServerConfig();
 
     const mode = interaction.options.getString('mode') || 'normal';
     await interaction.deferReply({

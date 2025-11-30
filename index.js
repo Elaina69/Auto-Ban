@@ -1,7 +1,7 @@
 // Import Discord Lib
 import { Client, GatewayIntentBits, Events } from 'discord.js';
 // Import Utils
-import { loadBotConfig } from './utils/configManager.js';
+import { configManager } from './utils/configManager.js';
 import { setupLockfile } from './utils/lockfile.js';
 import { format } from './utils/formatLang.js';
 import path from 'path';
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import { HandleInteractionCreate } from './events/interactionCreate.js';
 import handleMessageCreate from './events/messageCreate.js';
 // Import bot's commands
-import { registerCommands } from './events/commands/commands.js';
+import { registerCommands } from './events/commands.js';
 // Import language file
 import lang from './configs/lang.js';
 // Import logger
@@ -26,7 +26,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load bot's config
-const botConfig = await loadBotConfig();
+const botConfig = await configManager.loadBotConfig();
 
 // Setup lockfile
 setupLockfile(botConfig.botId, __dirname, lang);
@@ -62,6 +62,12 @@ client.on(Events.MessageCreate, message =>
 
 // Login bot to Discord
 client.login(botConfig.token);
+
+// Print number of server using this bot
+setInterval(() => {
+    const usedServers = configManager.countingUsedServers();
+    console.log(format(lang.currentUsedServers, { count: usedServers }));
+}, 12 * 60 * 60 * 1000);
 
 
 // Handle process errors

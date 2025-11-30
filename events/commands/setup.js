@@ -1,11 +1,11 @@
 import { MessageFlags } from 'discord.js';
-import { saveServerConfig, loadServerConfig } from '../../utils/configManager.js';
+import { configManager } from '../../utils/configManager.js';
 import lang from '../../configs/lang.js';
 import { format } from '../../utils/formatLang.js';
 
 export async function setupCommand(interaction) {
     const guildId = interaction.guildId;
-    const serverConfig = loadServerConfig();
+    const serverConfig = await configManager.loadServerConfig();
     const channelToBan = interaction.options.getChannel('channeltoban');
     let notifyChannel = interaction.options.getChannel('notifychannel');
     
@@ -16,7 +16,7 @@ export async function setupCommand(interaction) {
         bannedChannelId: channelToBan.id,
         notifyChannelId: notifyChannel.id
     };
-    saveServerConfig(serverConfig);
+    configManager.saveServerConfig(serverConfig);
     
     await interaction.reply({
         content: `${lang.setupCompleted}\n- ${format(lang.bannedChannel, { channelToBan: channelToBan })}` +

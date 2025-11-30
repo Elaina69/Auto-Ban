@@ -1,10 +1,10 @@
 import lang from '../../configs/lang.js';
 import { MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from 'discord.js';
-import { loadBannedAccounts } from '../../utils/configManager.js';
+import { configManager } from '../../utils/configManager.js';
 
 export async function banListCommand(interaction) {
     const guildId = interaction.guildId;
-    const bannedAccounts = await loadBannedAccounts();
+    const bannedAccounts = await configManager.loadBannedAccounts();
     const list = bannedAccounts[guildId] || [];
 
      if (list.length === 0) {
