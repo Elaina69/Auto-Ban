@@ -1,6 +1,6 @@
 import lang from '../../configs/lang.js';
 import { format } from '../../utils/formatLang.js';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
 import { configManager } from '../../utils/configManager.js';
 
 export async function adminList(interaction) {
@@ -9,7 +9,7 @@ export async function adminList(interaction) {
         if (!interaction.member.permissions.has('Administrator')) {
             return await interaction.reply({
                 content: lang.noPermissionToViewAdmins,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -42,13 +42,13 @@ export async function adminList(interaction) {
 
         await interaction.reply({
             embeds: [embed],
-            ephemeral: false
+            flags: MessageFlags.Ephemeral
         });
     } catch (err) {
         console.error('Error in adminList command:', err.message);
         await interaction.reply({
             content: lang.adminListCommandError + err.message,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         }).catch(() => {});
     }
 }

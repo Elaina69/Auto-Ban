@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { setupCommand } from './commands/setup.js';
 import { banListCommand } from './commands/banList.js';
 import { checkPermCommand } from './commands/checkPerm.js';
@@ -47,7 +48,7 @@ export class HandleInteractionCreate {
             default:
                 await interaction.reply({
                     content: 'Unknown command.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 }).catch(() => {});
         }
     }

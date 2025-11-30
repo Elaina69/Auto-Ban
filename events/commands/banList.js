@@ -67,7 +67,7 @@ export async function banListCommand(interaction) {
         if (i.user.id !== interaction.user.id) {
             await i.reply({
                     content: lang.notYourButton,
-                ephemeral: true
+                    flags: MessageFlags.Ephemeral
             });
             return;
         }
