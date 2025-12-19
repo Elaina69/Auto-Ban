@@ -1,8 +1,9 @@
+// Persistent memory to store recent messages for multi-channel spam detection across all instances
+const messageHistory = new Map();
+
 export class SpamDetector {
     constructor(botConfig = {}) {
         this.updateConfig(botConfig);
-        // Temporary memory to store recent messages for multi-channel spam detection
-        this.messageHistory = new Map();
     }
 
     updateConfig(botConfig = {}) {
@@ -32,7 +33,7 @@ export class SpamDetector {
     /**
      * Detects multi-channel spam.
      * @param {import('discord.js').Message} message
-     * @returns {array|null} - List of channels where the user spammed, or null if not spam
+     * @returns {object|null} - { isSpam: boolean, warning: boolean, channels: array } or null if not spam
      */
     detectMultiChannelSpam(message) {
         const now = Date.now();
@@ -41,11 +42,11 @@ export class SpamDetector {
 
         if (!content) return null;
 
-        if (!this.messageHistory.has(userId)) {
-            this.messageHistory.set(userId, []);
+        if (!messageHistory.has(userId)) {
+            messageHistory.set(userId, []);
         }
 
-        const history = this.messageHistory.get(userId);
+        const history = messageHistory.get(userId);
 
         history.push({
             channelId: message.channel.id,
@@ -54,7 +55,7 @@ export class SpamDetector {
         });
 
         const recent = history.filter(msg => now - msg.timestamp <= this.spamWindowMs);
-        this.messageHistory.set(userId, recent);
+        messageHistory.set(userId, recent);
 
         // Check multi-channel spam (spam same content in >= threshold channels)
         const distinctChannels = new Set(
@@ -63,9 +64,17 @@ export class SpamDetector {
                 .map(msg => msg.channelId)
         );
 
-        if (distinctChannels.size >= this.channelSpamThreshold) {
-            this.messageHistory.delete(userId); // reset on detection
-            return Array.from(distinctChannels);
+        const isSpam = distinctChannels.size >= this.channelSpamThreshold;
+        const warning = distinctChannels.size === this.channelSpamThreshold - 1;
+
+        // For debugging ONLY. DO NOT ENABLE IN PRODUCTION
+        // console.log(`User ${userId} sent "${content}" in ${distinctChannels.size} distinct channels. Threshold: ${this.channelSpamThreshold}, Warning: ${warning}, Spam: ${isSpam}`);
+
+        if (isSpam) {
+            messageHistory.delete(userId); // reset on detection
+            return { isSpam: true, warning: false, channels: Array.from(distinctChannels) };
+        } else if (warning) {
+            return { isSpam: false, warning: true, channels: Array.from(distinctChannels) };
         }
 
         return null;

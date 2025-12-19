@@ -104,4 +104,6 @@ export default {
     banSuccessLog                   : "🚫 Banned {username} in server {guildId}.",
     cannotBanUserLog                : "❌ Unable to ban {username}: ",
     messageCreateError              : "❌ Error in MessageCreate: ",
+    spamWarningChannel              : "⚠️ {user}, you are close to being banned for spamming. One more spam message and you'll be banned!",
+    spamWarningDM                   : "⚠️ Warning: You are close to being banned from {serverName} for spamming. Please stop spamming to avoid a ban.",
 }
