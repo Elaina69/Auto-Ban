@@ -12,17 +12,27 @@ export class BanManager {
      * Bans a user and updates the banned accounts list.
      * @param {import('discord.js').Message} message - The message object.
      * @param {object} bannedAccounts - The banned accounts.
+     * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
      */
-    async banUser(message, bannedAccounts) {
+    async banUser(message, bannedAccounts, isBannedChannel = false) {
+        const reason = isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam;
+        
         await message.guild.members.ban(message.author.id, {
-            reason: `${lang.banReason}.`
+            reason: reason
         });
 
-        if (!bannedAccounts[message.guild.id]) bannedAccounts[message.guild.id] = [];
-        if (!bannedAccounts[message.guild.id].includes(message.author.tag)) {
-            bannedAccounts[message.guild.id].push(message.author.tag);
-            configManager.saveBannedAccounts(bannedAccounts);
-        }
+        if (!bannedAccounts[message.guild.id]) bannedAccounts[message.guild.id] = {};
+        
+        // Save detailed user information
+        bannedAccounts[message.guild.id][message.author.tag] = {
+            displayName: message.author.displayName || message.author.username,
+            id: message.author.id,
+            time: new Date().toISOString(),
+            lastBannedMessage: message.content || lang.noMessageContent,
+            reason: reason
+        };
+        
+        configManager.saveBannedAccounts(bannedAccounts);
     }
 
     /**
@@ -111,10 +121,12 @@ export class BanManager {
      * @param {array} extraChannels - Additional channels where the user spammed.
      * @param {boolean} isDM - Is this for DM (true) or channel (false).
      * @param {array} admins - List of admin user IDs for contact.
+     * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
      * @returns {object} - Embed object
      */
-    createBanEmbed(message, serverName, extraChannels = [], isDM = false, admins = []) {
+    createBanEmbed(message, serverName, extraChannels = [], isDM = false, admins = [], isBannedChannel = false) {
         const content = message.content || lang.noMessageContent;
+        const reason = isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam;
 
         let channelsList = [`<#${message.channel.id}>`];
         if (extraChannels.length > 0) {
@@ -128,7 +140,7 @@ export class BanManager {
 
         const fields = [
             { name: lang.userField, value: `${message.author.tag} (<@${message.author.id}>)`, inline: false },
-            { name: lang.reasonField, value: lang.banReason, inline: false },
+            { name: lang.reasonField, value: reason, inline: false },
             { name: lang.messageContentField, value: content.substring(0, 1024) || lang.noMessageContent, inline: false },
             { name: lang.channelField, value: channelsList.join(', '), inline: false },
             { name: lang.serverField, value: serverName, inline: false }
@@ -156,12 +168,13 @@ export class BanManager {
      * @param {import('discord.js').Message} message - The message object.
      * @param {object} settings - The server settings.
      * @param {array} extraChannels - Additional channels where the user spammed.
+     * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
      */
-    async notifyBan(message, settings, extraChannels = []) {
+    async notifyBan(message, settings, extraChannels = [], isBannedChannel = false) {
         const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId || settings.bannedChannelId);
 
         if (notifyChannel && notifyChannel.isTextBased?.()) {
-            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, false, settings.admins || []);
+            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, false, settings.admins || [], isBannedChannel);
             await this.sendNotification(embed, notifyChannel);
 
             // Reupload attachments if exist (to channel)
@@ -172,12 +185,14 @@ export class BanManager {
     /**
      * Sends a DM notification to the banned user.
      * @param {import('discord.js').Message} message - The message object.
+     * @param {object} settings - The server settings.
      * @param {array} extraChannels - Additional channels where the user spammed.
+     * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
      */
-    async notifyUserBan(message, settings, extraChannels = []) {
+    async notifyUserBan(message, settings, extraChannels = [], isBannedChannel = false) {
         try {
             const user = message.author;
-            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, true, settings.admins || []);
+            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, true, settings.admins || [], isBannedChannel);
             await this.sendNotification(embed, user);
             // Reupload attachments if exist (to user DM)
             await this.reuploadAttachments(message, null, user);

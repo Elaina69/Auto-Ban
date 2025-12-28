@@ -6,6 +6,7 @@ import { banTestCommand } from './commands/banTest.js';
 import { addAdminCommand } from './commands/addAdmin.js';
 import { deleteAdminCommand } from './commands/deleteAdmin.js';
 import { adminList } from './commands/adminList.js';
+import { getBanInfoCommand } from './commands/getBanInfo.js';
 
 export class HandleInteractionCreate {
     /**
@@ -44,6 +45,10 @@ export class HandleInteractionCreate {
             // Command: /adminlist
             case 'adminlist':
                 await adminList(interaction);
+                break;
+            // Command: /getbaninfo (username)
+            case 'getbaninfo':
+                await getBanInfoCommand(interaction);
                 break;
             default:
                 await interaction.reply({

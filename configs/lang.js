@@ -76,7 +76,8 @@ export default {
     adminListCommandError           : "❌ Error in adminList command: ",
 
     // events/_banManager.js
-    banReason                       : "Bot spam",
+    banReasonSpam                   : "Bot spam",
+    banReasonBannedChannel          : "Send message on auto ban channel",
     deletedFiles                    : "📎 File from {tag} ({id})",
     downloadFilesErrorLog           : "Cannot download file {att.url}:",
     downloadFilesError              : "⚠️ Cannot download file from {message.author.tag}: ",
@@ -106,4 +107,17 @@ export default {
     messageCreateError              : "❌ Error in MessageCreate: ",
     spamWarningChannel              : "⚠️ {user}, you are close to being banned for spamming. One more spam message and you'll be banned!",
     spamWarningDM                   : "⚠️ Warning: You are close to being banned from {serverName} for spamming. Please stop spamming to avoid a ban.",
+
+    // events/commands/getBanInfo.js
+    getBanInfoDescription           : "Get detailed ban information of a user.",
+    getBanInfoUsernameDescription   : "Username of the banned user (e.g., username#1234)",
+    getBanInfoTitle                 : "📋 Ban Information",
+    getBanInfoUserField             : "User",
+    getBanInfoDisplayNameField      : "Display Name",
+    getBanInfoIdField               : "User ID",
+    getBanInfoTimeField             : "Ban Time",
+    getBanInfoReasonField           : "Reason",
+    getBanInfoMessageField          : "Last Banned Message",
+    getBanInfoNotFound              : "❌ User `{username}` is not in the banned list of this server.",
+    getBanInfoError                 : "❌ Error retrieving ban information: {error}",
 }

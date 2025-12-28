@@ -50,14 +50,14 @@ export default async function handleMessageCreate(message, client) {
 
         try {
             // Send DM to banned user
-            await banManager.notifyUserBan(message, settings, spamResult ? spamResult.channels : []);
+            await banManager.notifyUserBan(message, settings, spamResult ? spamResult.channels : [], isBannedChannel);
 
             // Ban user
-            await banManager.banUser(message, bannedAccounts);
+            await banManager.banUser(message, bannedAccounts, isBannedChannel);
             console.log(format(lang.banSuccessLog, { username: message.author.tag, guildId: message.guild.id }));
 
             // Send message into Notify channel
-            await banManager.notifyBan(message, settings, spamResult ? spamResult.channels : []);
+            await banManager.notifyBan(message, settings, spamResult ? spamResult.channels : [], isBannedChannel);
 
             // Delete user messages if enabled
             if (botConfig.deleteMessage) {

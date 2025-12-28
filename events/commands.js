@@ -81,7 +81,17 @@ export async function registerCommands(token, botId) {
         new SlashCommandBuilder()
             .setName('adminlist')
             .setDescription('List all admins/moderators for the server.')
-            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /getBanInfo
+        new SlashCommandBuilder()
+            .setName('getbaninfo')
+            .setDescription(lang.getBanInfoDescription)
+            .addStringOption(option =>
+                option
+                    .setName('username')
+                    .setDescription(lang.getBanInfoUsernameDescription)
+                    .setRequired(true)
+            )
     ].map(cmd => cmd.toJSON());
 
     // Register slash commands globally

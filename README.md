@@ -20,6 +20,7 @@
  - `/addadmin (user)`: Adds an admin/mod to the "contact" section of the ban message.
  - `/deleteadmin (user)`: Removes an admin/moderator from the list.
  - `/adminlist`: Returns a list of admins/moderators for the "contact" section of the ban message.
+ - `/getbaninfo`: Return a ban infomation based on username.
 
 ## How to self-host
  - Clone this repo

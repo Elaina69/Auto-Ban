@@ -5,7 +5,10 @@ import { configManager } from '../../utils/configManager.js';
 export async function banListCommand(interaction) {
     const guildId = interaction.guildId;
     const bannedAccounts = await configManager.loadBannedAccounts();
-    const list = bannedAccounts[guildId] || [];
+    const bannedUsersObj = bannedAccounts[guildId] || {};
+    
+    // Convert object to array of usernames
+    const list = Object.keys(bannedUsersObj);
 
      if (list.length === 0) {
         await interaction.reply({
