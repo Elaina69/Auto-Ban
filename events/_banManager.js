@@ -1,6 +1,6 @@
 import lang from '../configs/lang.js';
 import { format } from '../utils/formatLang.js';
-import { ChannelType } from 'discord.js';
+import { ChannelType, EmbedBuilder } from 'discord.js';
 import { configManager } from '../utils/configManager.js';
 
 export class BanManager {
@@ -122,7 +122,7 @@ export class BanManager {
      * @param {boolean} isDM - Is this for DM (true) or channel (false).
      * @param {array} admins - List of admin user IDs for contact.
      * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
-     * @returns {object} - Embed object
+     * @returns {EmbedBuilder} - Embed builder object
      */
     createBanEmbed(message, serverName, extraChannels = [], isDM = false, admins = [], isBannedChannel = false) {
         const content = message.content || lang.noMessageContent;
@@ -138,29 +138,32 @@ export class BanManager {
             }
         }
 
-        const fields = [
-            { name: lang.userField, value: `${message.author.tag} (<@${message.author.id}>)`, inline: false },
-            { name: lang.reasonField, value: reason, inline: false },
-            { name: lang.messageContentField, value: content.substring(0, 1024) || lang.noMessageContent, inline: false },
-            { name: lang.channelField, value: channelsList.join(', '), inline: false },
-            { name: lang.serverField, value: serverName, inline: false }
-        ];
+        const embed = new EmbedBuilder()
+            .setColor(0xff0000)
+            .setTitle(isDM ? lang.youBannedTitle : lang.userBannedTitle)
+            .addFields(
+                { name: lang.userField, value: `${message.author.tag} (<@${message.author.id}>)`, inline: false },
+                { name: lang.reasonField, value: reason, inline: false },
+                { name: lang.messageContentField, value: content.substring(0, 1024) || lang.noMessageContent, inline: false },
+                { name: lang.channelField, value: channelsList.join(', '), inline: false },
+                { name: lang.serverField, value: serverName, inline: false }
+            )
+            .setTimestamp();
+
+        // Add description for DM messages
+        if (isDM) {
+            embed.setDescription(format(lang.youBannedDescription, { serverName }));
+        }
 
         // Add contact admins field if there are admins and it's a DM
         if (isDM && admins.length > 0) {
             const adminMentions = admins.map(id => `<@${id}>`).join(', ');
-            fields.push({ name: lang.contactAdminsField, value: adminMentions, inline: false });
+            embed.addFields({ name: lang.contactAdminsField, value: adminMentions, inline: false });
         } else if (isDM && admins.length === 0) {
-            fields.push({ name: lang.contactAdminsField, value: lang.noAdminsAvailable, inline: false });
+            embed.addFields({ name: lang.contactAdminsField, value: lang.noAdminsAvailable, inline: false });
         }
 
-        return {
-            color: 0xff0000,
-            title: isDM ? lang.youBannedTitle : lang.userBannedTitle,
-            description: isDM ? format(lang.youBannedDescription, { serverName }) : undefined,
-            fields,
-            timestamp: new Date().toISOString(),
-        };
+        return embed;
     }
 
     /**
@@ -261,22 +264,21 @@ export class BanManager {
             notifyChannel.viewable &&
             notifyChannel.permissionsFor(this.client.user)?.has('SendMessages')
         ) {
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xffa500)
+                .setTitle(lang.cannotBanUserTitle)
+                .setDescription(format(lang.cannotBanUserNotify, {
+                    username: message.author.tag,
+                    channelName: message.channel.name
+                }))
+                .addFields(
+                    { name: lang.channelField, value: `<#${message.channel.id}>`, inline: true },
+                    { name: lang.errorField, value: `\`\`\`${err.message}\`\`\``.substring(0, 1024) }
+                )
+                .setTimestamp();
+
             await notifyChannel.send({
-                embeds: [
-                    {
-                        color: 0xffa500,
-                        title: lang.cannotBanUserTitle,
-                        description: format(lang.cannotBanUserNotify, {
-                            username: message.author.tag,
-                            channelName: message.channel.name
-                        }),
-                        fields: [
-                            { name: lang.channelField, value: `<#${message.channel.id}>`, inline: true },
-                            { name: lang.errorField, value: `\`\`\`${err.message}\`\`\``.substring(0, 1024) }
-                        ],
-                        timestamp: new Date().toISOString(),
-                    }
-                ]
+                embeds: [errorEmbed]
             });
         }
     }

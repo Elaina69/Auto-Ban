@@ -8,6 +8,10 @@ import lang from '../configs/lang.js';
  */
 export async function registerCommands(token, botId) {
     const commands = [
+        // Command: /help
+        new SlashCommandBuilder()
+            .setName('help')
+            .setDescription(lang.helpCommandDescription),
         // Command: /setup (channel to ban) (channel to notify)
         new SlashCommandBuilder()
             .setName('setup')

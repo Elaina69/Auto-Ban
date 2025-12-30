@@ -5,4 +5,4 @@ configs/bannedAccountsServers.json
 configs/serverConfig.json
 logs/
 *.lock
-Auto-Ban.code-workspace
+*.code-workspace

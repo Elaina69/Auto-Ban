@@ -1,6 +1,6 @@
 export default {
     // index.js
-    botOnline                       : "🤖 Bot online as: {tag}",
+    botOnline                       : "Bot online as: {tag}",
     currentUsedServers              : "Current number of servers using this bot: {count}",
 
     // utils/configManager.js
@@ -18,6 +18,7 @@ export default {
     lockFileInUse                   : "[ERROR] Bot with botId ${botId} is already running (pid=${oldPid}).",
 
     // events/commands.js
+    helpCommandDescription          : "Show all available commands and their usage.",
     setupDescription                : "Setup auto-ban bot.",
     setupChannelToBanDescription    : "Channel to ban users who send messages here.",
     setupNotifyChannelDescription   : "Channel to notify when a user is banned.",
@@ -35,7 +36,7 @@ export default {
     
     // events/commands/banList.js
     noBannedAccounts                : "✅ Currently, there are no banned accounts in this server.",
-    bannedAccountsList              : "📜 **List of banned accounts by bot in the server:**",
+    bannedAccountsList              : "**List of banned accounts by bot in the server:**",
     notYourButton                   : "❌ This button is not for you.",
 
     // events/commands/checkPerm.js
@@ -45,14 +46,16 @@ export default {
     permAddReactions                : "Add Reactions",
     permManageMessages              : "Manage Messages",
     permBanMembers                  : "Ban Members",
-    botPermissionInChannel          : "🔎 **Bot's permissions in channel <#{channel}>:**",
+    botPermissionInChannel          : "**Bot's permissions in channel <#{channel}>:**",
 
     // events/commands/banTest.js
     testingAutoBan                  : "🚧 Testing auto ban...",
     testNormalModeDone              : "✅ Normal mode test completed.",
     testingMultiChannelSpam         : "🚧 Testing multi-channel spam...",
     needAtLeast3Channels            : "⚠️ Need at least 3 channels to test.",
-    testMultiChannelDone            : "✅ Multi-channel spam test completed (3 channels).",
+    testMultiChannelDone            : "✅ Multi-channel spam test completed.",
+    noBannedChannelSetup            : "⚠️ No banned channel configured. Please run `/setup` first.",
+    bannedChannelNotFound           : "⚠️ Banned channel not found. Please run `/setup` again.",
 
      // events/commands/addAdmin.js
     addAdminDescription             : "Add an admin or moderator to the contact list for banned users.",
@@ -68,7 +71,7 @@ export default {
 
     // events/commands/adminList.js
     noPermissionToViewAdmins        : "❌ You do not have permission to view the admin/moderator list.",
-    adminListTitle                  : "📋 Admin/Moderator List",
+    adminListTitle                  : "Admin/Moderator List",
     adminListDescription            : "List of admins/moderators for ban message:",
     noAdminsAvailable               : "No admins/mods available for ban message.",
     adminField                      : "Admins/Moderators",
@@ -111,7 +114,7 @@ export default {
     // events/commands/getBanInfo.js
     getBanInfoDescription           : "Get detailed ban information of a user.",
     getBanInfoUsernameDescription   : "Username of the banned user (e.g., username#1234)",
-    getBanInfoTitle                 : "📋 Ban Information",
+    getBanInfoTitle                 : "Ban Information",
     getBanInfoUserField             : "User",
     getBanInfoDisplayNameField      : "Display Name",
     getBanInfoIdField               : "User ID",
@@ -120,4 +123,24 @@ export default {
     getBanInfoMessageField          : "Last Banned Message",
     getBanInfoNotFound              : "❌ User `{username}` is not in the banned list of this server.",
     getBanInfoError                 : "❌ Error retrieving ban information: {error}",
+
+    // events/commands/help.js
+    helpTitle                       : "Auto-Ban Bot - Command List",
+    helpDescription                 : "All available commands and their functions:",
+    helpSetupName                   : "/setup <channel to ban> [notify channel]",
+    helpSetupValue                  : "Setup the bot by specifying which channel will trigger auto-ban and where to send notifications. If notify channel is not provided, it will use the banned channel.",
+    helpCheckPermName               : "/checkperm [channel]",
+    helpCheckPermValue              : "Check if the bot has the required permissions in a specific channel. If no channel is provided, checks the current channel.",
+    helpBanListName                 : "/banlist",
+    helpBanListValue                : "Display a paginated list of all users who have been banned by this bot in the current server.",
+    helpAddAdminName                : "/addadmin <user>",
+    helpAddAdminValue               : "Add an admin or moderator to the contact list that will be shown in ban messages sent to users.",
+    helpDeleteAdminName             : "/deleteadmin <user>",
+    helpDeleteAdminValue            : "Remove an admin or moderator from the contact list.",
+    helpAdminListName               : "/adminlist",
+    helpAdminListValue              : "Display the list of admins/moderators who are available for contact in ban messages.",
+    helpGetBanInfoName              : "/getbaninfo <username>",
+    helpGetBanInfoValue             : "Get detailed ban information about a specific user, including ban time, reason, and last message.",
+    helpBanTestName                 : "/bantest [mode]",
+    helpBanTestValue                : "Test the auto-ban functionality. Modes: 'normal' (single channel) or 'multichannel' (spam detection across 3+ channels). Admin only.",
 }

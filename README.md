@@ -14,13 +14,14 @@
  - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in all text channels to run.
 
 ## Commands
- - `/setup (channel to ban) (ban notify channel)`: Setup the bot.
- - `/checkperm (channel - not required)`: Check if the bot has the required permissions in that channel.
+ - `/help`: Show all available commands and their usage.
+ - `/setup <channel to ban> [ban notify channel]`: Setup the bot.
+ - `/checkperm [channel]`: Check if the bot has the required permissions in that channel.
  - `/banlist`: Returns a list of accounts banned by the bot.
- - `/addadmin (user)`: Adds an admin/mod to the "contact" section of the ban message.
- - `/deleteadmin (user)`: Removes an admin/moderator from the list.
+ - `/addadmin <user>`: Adds an admin/mod to the "contact" section of the ban message.
+ - `/deleteadmin <user>`: Removes an admin/moderator from the list.
  - `/adminlist`: Returns a list of admins/moderators for the "contact" section of the ban message.
- - `/getbaninfo`: Return a ban infomation based on username.
+ - `/getbaninfo <username>`: Return a ban infomation based on username.
 
 ## How to self-host
  - Clone this repo

@@ -1,4 +1,5 @@
 import { MessageFlags } from "discord.js";
+import { helpCommand } from './commands/help.js';
 import { setupCommand } from './commands/setup.js';
 import { banListCommand } from './commands/banList.js';
 import { checkPermCommand } from './commands/checkPerm.js';
@@ -18,6 +19,10 @@ export class HandleInteractionCreate {
         if (!interaction.isChatInputCommand()) return;
 
         switch (interaction.commandName) {
+            // Command: /help
+            case 'help':
+                await helpCommand(interaction);
+                break;
             // Command: /setup (channel to ban) (channel to notify)
             case 'setup':
                 await setupCommand(interaction);
