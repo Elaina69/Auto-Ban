@@ -8,6 +8,9 @@ import { addAdminCommand } from './commands/addAdmin.js';
 import { deleteAdminCommand } from './commands/deleteAdmin.js';
 import { adminList } from './commands/adminList.js';
 import { getBanInfoCommand } from './commands/getBanInfo.js';
+// Farm commands
+import { farmEnableCommand } from './commands/farm/enable.js';
+import { farmPrefixCommand } from './commands/farm/prefix.js';
 
 export class HandleInteractionCreate {
     /**
@@ -54,6 +57,26 @@ export class HandleInteractionCreate {
             // Command: /getbaninfo (username)
             case 'getbaninfo':
                 await getBanInfoCommand(interaction);
+                break;
+            // Command: /farm (subcommands)
+            case 'farm':
+                const subcommand = interaction.options.getSubcommand();
+                switch (subcommand) {
+                    case 'enable':
+                        await farmEnableCommand(interaction, 'enable');
+                        break;
+                    case 'disable':
+                        await farmEnableCommand(interaction, 'disable');
+                        break;
+                    case 'prefix':
+                        await farmPrefixCommand(interaction);
+                        break;
+                    default:
+                        await interaction.reply({
+                            content: 'Unknown farm subcommand.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                }
                 break;
             default:
                 await interaction.reply({

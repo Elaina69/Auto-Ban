@@ -15,6 +15,8 @@ import { registerCommands } from './events/commands.js';
 import lang from './configs/lang.js';
 // Import logger
 import { Logger } from './utils/logger.js';
+// Import price history manager
+import { priceHistoryManager } from './utils/priceHistoryManager.js';
 
 
 // Initialize logger
@@ -47,6 +49,9 @@ await registerCommands(botConfig.token, botConfig.botId);
 // Log bot online
 client.once(Events.ClientReady, () => {
     console.log(format(lang.botOnline, { tag: client.user.tag }));
+    
+    // Initialize price history on startup
+    priceHistoryManager.updatePriceHistory();
 });
 
 // Handle interactions
@@ -63,7 +68,13 @@ client.on(Events.MessageCreate, message =>
 // Login bot to Discord
 client.login(botConfig.token);
 
-// Print number of server using this bot
+// Print number of serve
+
+// Update price history every 6 hours
+setInterval(() => {
+    priceHistoryManager.updatePriceHistory();
+    console.log('📊 Price history updated');
+}, 6 * 60 * 60 * 1000); // Every 6 hoursr using this bot
 setInterval(() => {
     const usedServers = configManager.countingUsedServers();
     console.log(format(lang.currentUsedServers, { count: usedServers }));

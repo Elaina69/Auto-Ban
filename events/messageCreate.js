@@ -3,6 +3,7 @@ import { format } from '../utils/formatLang.js';
 import { configManager } from '../utils/configManager.js';
 import { SpamDetector } from './_spamDetector.js';
 import { BanManager } from './_banManager.js';
+import { handleFarmMessage } from './farmMessageHandler.js';
 
 export default async function handleMessageCreate(message, client) {
     const serverConfig = configManager.loadServerConfig();
@@ -15,6 +16,10 @@ export default async function handleMessageCreate(message, client) {
     try {
         // Ignore messages from bots
         if (!message.guild) return;
+        
+        // Check farm message commands first
+        const handledByFarm = await handleFarmMessage(message);
+        if (handledByFarm) return;
 
         // Get server settings
         const settings = serverConfig[message.guild.id];

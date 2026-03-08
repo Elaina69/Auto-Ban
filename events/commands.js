@@ -95,6 +95,33 @@ export async function registerCommands(token, botId) {
                     .setName('username')
                     .setDescription(lang.getBanInfoUsernameDescription)
                     .setRequired(true)
+            ),
+        // Command: /farm (minigame - not shown in /help)
+        new SlashCommandBuilder()
+            .setName('farm')
+            .setDescription('Farming minigame settings')
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('enable')
+                    .setDescription('Enable farming mode')
+            )
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('disable')
+                    .setDescription('Disable farming mode')
+            )
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('prefix')
+                    .setDescription('Change farm command prefix (default: h)')
+                    .addStringOption(option =>
+                        option
+                            .setName('prefix')
+                            .setDescription('New prefix (1-3 characters, no spaces)')
+                            .setRequired(true)
+                            .setMinLength(1)
+                            .setMaxLength(3)
+                    )
             )
     ].map(cmd => cmd.toJSON());
 
