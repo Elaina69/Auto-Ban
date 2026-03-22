@@ -10,7 +10,7 @@
 </p>
 
 ## How to setup bot
- - Invite bot: [Invite](https://discord.com/oauth2/authorize?client_id=1402250342040731688)
+ - ~Invite bot: [Invite](https://discord.com/oauth2/authorize?client_id=1402250342040731688)~ Bot reach max joined server due to Gateway Intent, you have to self-host this bot then .-.
  - Bot must have `Ban Members`, `Kick Members`, `Manage channels`, `Manage Messages`, `Read Message History`, `Send Messages`, `View Channels` permission in all text channels to run.
 
 ## Commands
