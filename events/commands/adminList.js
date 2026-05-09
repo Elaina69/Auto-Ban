@@ -6,7 +6,7 @@ import { configManager } from '../../utils/configManager.js';
 export async function adminList(interaction) {
     try {
         // Check if user has permission
-        if (!interaction.member.permissions.has('Administrator')) {
+        if (!interaction.memberPermissions?.has('Administrator')) {
             return await interaction.reply({
                 content: lang.noPermissionToViewAdmins,
                 flags: MessageFlags.Ephemeral

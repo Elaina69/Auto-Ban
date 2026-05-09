@@ -17,7 +17,13 @@ tmux new-session -d -s "$SESSION_NAME"
 # Lưu ý: Cần source .bashrc để Tmux nhận diện được PM2/Node
 tmux send-keys -t "$SESSION_NAME" "cd $WORKDIR" C-m
 tmux send-keys -t "$SESSION_NAME" "source ~/.bashrc" C-m
-tmux send-keys -t "$SESSION_NAME" "pm2 start index.js --name $SESSION_NAME" C-m
+
+# Khởi động Bot 1 với BOT_INSTANCE=1
+tmux send-keys -t "$SESSION_NAME" "BOT_INSTANCE=1 pm2 start index.js --name ${SESSION_NAME}-1" C-m
+
+# Khởi động Bot 2 với BOT_INSTANCE=2
+tmux send-keys -t "$SESSION_NAME" "BOT_INSTANCE=2 pm2 start index.js --name ${SESSION_NAME}-2" C-m
+
 tmux send-keys -t "$SESSION_NAME" "pm2 monit" C-m
 
-echo "[DONE] Đã khởi động $SESSION_NAME trong Tmux."
+echo "[DONE] Đã khởi động ${SESSION_NAME}-1 và ${SESSION_NAME}-2 trong Tmux."

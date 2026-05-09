@@ -23,6 +23,21 @@ export async function helpCommand(interaction) {
                 inline: false
             },
             {
+                name: lang.helpAddWhitelistName,
+                value: lang.helpAddWhitelistValue,
+                inline: false
+            },
+            {
+                name: lang.helpDeleteWhitelistName,
+                value: lang.helpDeleteWhitelistValue,
+                inline: false
+            },
+            {
+                name: lang.helpGetWhitelistName,
+                value: lang.helpGetWhitelistValue,
+                inline: false
+            },
+            {
                 name: lang.helpAddAdminName,
                 value: lang.helpAddAdminValue,
                 inline: false
@@ -35,6 +50,16 @@ export async function helpCommand(interaction) {
             {
                 name: lang.helpAdminListName,
                 value: lang.helpAdminListValue,
+                inline: false
+            },
+            {
+                name: lang.helpBanName,
+                value: lang.helpBanValue,
+                inline: false
+            },
+            {
+                name: lang.helpUnbanName,
+                value: lang.helpUnbanValue,
                 inline: false
             },
             {

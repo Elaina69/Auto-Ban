@@ -29,9 +29,9 @@ export async function registerCommands(token, botId) {
                     .addChannelTypes(ChannelType.GuildText)
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-        // Command: /banlist
+        // Command: /getbanlist
         new SlashCommandBuilder()
-            .setName('banlist')
+            .setName('getbanlist')
             .setDescription(lang.bannedListDescription),
 
         // Command: /checkperm
@@ -59,34 +59,83 @@ export async function registerCommands(token, botId) {
                     )
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-        // Command: /addAdmin
+        // Command: /addadmin
         new SlashCommandBuilder()
             .setName('addadmin')
-            .setDescription("Add admin/mod's name to the list for ban message.")
+            .setDescription(lang.addAdminDescription)
             .addUserOption(option =>
                 option
                     .setName('user')
-                    .setDescription("User to be added as admin/mod")
+                    .setDescription(lang.addAdminUserDescription)
                     .setRequired(true)
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-        // Command: /deleteAdmin
+        // Command: /deleteadmin
         new SlashCommandBuilder()
             .setName('deleteadmin')
-            .setDescription("Delete admin/mod's name from the list for ban message.")
+            .setDescription(lang.deleteAdminDescription)
             .addUserOption(option =>
                 option
                     .setName('user')
-                    .setDescription("User to be removed from admin/mod list")
+                    .setDescription(lang.deleteAdminUserDescription)
                     .setRequired(true)
             )
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-        // Command: /adminlist
+        // Command: /getadminlist
         new SlashCommandBuilder()
-            .setName('adminlist')
-            .setDescription('List all admins/moderators for the server.')
+            .setName('getadminlist')
+            .setDescription(lang.getAdminListDescription)
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-        // Command: /getBanInfo
+        // Command: /addwhitelist
+        new SlashCommandBuilder()
+            .setName('addwhitelist')
+            .setDescription(lang.addWhitelistDescription)
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription(lang.addWhitelistUserDescription)
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /deletewhitelist
+        new SlashCommandBuilder()
+            .setName('deletewhitelist')
+            .setDescription(lang.deleteWhitelistDescription)
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription(lang.deleteWhitelistUserDescription)
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /getwhitelist
+        new SlashCommandBuilder()
+            .setName('getwhitelist')
+            .setDescription(lang.getWhitelistDescription)
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /ban
+        new SlashCommandBuilder()
+            .setName('ban')
+            .setDescription(lang.manualBanDescription)
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription(lang.manualBanUserDescription)
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /unban
+        new SlashCommandBuilder()
+            .setName('unban')
+            .setDescription(lang.manualUnbanDescription)
+            .addStringOption(option =>
+                option
+                    .setName('username')
+                    .setDescription(lang.manualUnbanUsernameDescription)
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        // Command: /getbaninfo
         new SlashCommandBuilder()
             .setName('getbaninfo')
             .setDescription(lang.getBanInfoDescription)

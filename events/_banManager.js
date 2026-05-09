@@ -9,6 +9,81 @@ export class BanManager {
     }
 
     /**
+     * Builds the persisted ban record for a user.
+     * @param {import('discord.js').User|import('discord.js').GuildMember} user - Target user.
+     * @param {string} reason - Ban reason.
+     * @param {string} lastMessage - Last recorded message content.
+     * @returns {object}
+     */
+    createBanRecord(user, reason, lastMessage = lang.noMessageContent) {
+        return {
+            displayName: user.displayName || user.globalName || user.username,
+            id: user.id,
+            time: new Date().toISOString(),
+            lastBannedMessage: lastMessage || lang.noMessageContent,
+            reason
+        };
+    }
+
+    /**
+     * Saves a ban record for a user.
+     * @param {string} guildId - Guild ID.
+     * @param {import('discord.js').User|import('discord.js').GuildMember} user - Target user.
+     * @param {object} bannedAccounts - Persisted banned accounts object.
+     * @param {string} reason - Ban reason.
+     * @param {string} lastMessage - Last recorded message content.
+     */
+    saveBanRecord(guildId, user, bannedAccounts, reason, lastMessage = lang.noMessageContent) {
+        if (!bannedAccounts[guildId]) bannedAccounts[guildId] = {};
+
+        bannedAccounts[guildId][user.tag] = this.createBanRecord(user, reason, lastMessage);
+        configManager.saveBannedAccounts(bannedAccounts);
+    }
+
+    /**
+     * Removes a persisted ban record by user ID.
+     * @param {string} guildId - Guild ID.
+     * @param {string} userId - User ID.
+     * @param {object} bannedAccounts - Persisted banned accounts object.
+     */
+    removeBanRecord(guildId, userId, bannedAccounts) {
+        if (!bannedAccounts[guildId]) return;
+
+        for (const [username, info] of Object.entries(bannedAccounts[guildId])) {
+            if (info?.id === userId) {
+                delete bannedAccounts[guildId][username];
+            }
+        }
+
+        configManager.saveBannedAccounts(bannedAccounts);
+    }
+
+    /**
+     * Bans a guild user and updates the persisted ban list.
+     * @param {import('discord.js').Guild} guild - Guild instance.
+     * @param {import('discord.js').User|import('discord.js').GuildMember} user - Target user.
+     * @param {object} bannedAccounts - Persisted banned accounts object.
+     * @param {object} options - Ban options.
+     * @param {string} options.reason - Ban reason.
+     * @param {string} [options.lastMessage] - Last recorded message content.
+     */
+    async banGuildUser(guild, user, bannedAccounts, { reason, lastMessage = lang.noMessageContent }) {
+        await guild.members.ban(user.id, { reason });
+        this.saveBanRecord(guild.id, user, bannedAccounts, reason, lastMessage);
+    }
+
+    /**
+     * Unbans a guild user and removes the persisted ban record.
+     * @param {import('discord.js').Guild} guild - Guild instance.
+     * @param {string} userId - Target user ID.
+     * @param {object} bannedAccounts - Persisted banned accounts object.
+     */
+    async unbanGuildUser(guild, userId, bannedAccounts) {
+        await guild.members.unban(userId);
+        this.removeBanRecord(guild.id, userId, bannedAccounts);
+    }
+
+    /**
      * Bans a user and updates the banned accounts list.
      * @param {import('discord.js').Message} message - The message object.
      * @param {object} bannedAccounts - The banned accounts.
@@ -16,23 +91,11 @@ export class BanManager {
      */
     async banUser(message, bannedAccounts, isBannedChannel = false) {
         const reason = isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam;
-        
-        await message.guild.members.ban(message.author.id, {
-            reason: reason
-        });
 
-        if (!bannedAccounts[message.guild.id]) bannedAccounts[message.guild.id] = {};
-        
-        // Save detailed user information
-        bannedAccounts[message.guild.id][message.author.tag] = {
-            displayName: message.author.displayName || message.author.username,
-            id: message.author.id,
-            time: new Date().toISOString(),
-            lastBannedMessage: message.content || lang.noMessageContent,
-            reason: reason
-        };
-        
-        configManager.saveBannedAccounts(bannedAccounts);
+        await this.banGuildUser(message.guild, message.author, bannedAccounts, {
+            reason,
+            lastMessage: message.content || lang.noMessageContent
+        });
     }
 
     /**

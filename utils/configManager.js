@@ -3,13 +3,26 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import lang from '../configs/lang.js';
 import readline from 'readline';
+import { randomBytes } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const botConfigFile = path.join(__dirname, '../configs/botConfig.json');
+// botConfig is per-instance, serverConfig and bannedAccounts are shared
+const botInstance = process.env.BOT_INSTANCE || '1';
+const botConfigFile = path.join(__dirname, `../configs/botConfig.${botInstance}.json`);
 const serverConfigFile = path.join(__dirname, '../configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, '../configs/bannedAccountsServers.json');
+
+/**
+ * Atomic write: write to a temp file then rename to avoid corruption
+ * when multiple processes write simultaneously.
+ */
+function atomicWriteSync(filePath, data) {
+    const tmpFile = `${filePath}.${randomBytes(6).toString('hex')}.tmp`;
+    fs.writeFileSync(tmpFile, data);
+    fs.renameSync(tmpFile, filePath);
+}
 
 class ConfigManager {
     /**
@@ -76,7 +89,7 @@ class ConfigManager {
      * @param {object} serverConfig - The server configuration to save.
      */
     saveServerConfig(serverConfig) {
-        fs.writeFileSync(serverConfigFile, JSON.stringify(serverConfig, null, 4));
+        atomicWriteSync(serverConfigFile, JSON.stringify(serverConfig, null, 4));
     }
 
     // Load banned accounts from file
@@ -95,7 +108,7 @@ class ConfigManager {
      * @param {object} bannedAccounts - The banned accounts to save.
      */
     saveBannedAccounts(bannedAccounts) {
-        fs.writeFileSync(bannedAccountsFile, JSON.stringify(bannedAccounts, null, 4));
+        atomicWriteSync(bannedAccountsFile, JSON.stringify(bannedAccounts, null, 4));
     }
 
     countingUsedServers() {

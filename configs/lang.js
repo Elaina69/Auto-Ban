@@ -39,6 +39,23 @@ export default {
     bannedAccountsList              : "**List of banned accounts by bot in the server:**",
     notYourButton                   : "❌ This button is not for you.",
 
+    // events/commands/addWhitelist.js
+    addWhitelistDescription         : "Add a user to the whitelist to bypass auto-ban checks.",
+    addWhitelistUserDescription     : "The user to add to the whitelist.",
+    whitelistAdded                  : "✅ Added {user} to the whitelist.",
+    whitelistAlreadyExists          : "⚠️ {user} is already in the whitelist.",
+
+    // events/commands/deleteWhitelist.js
+    deleteWhitelistDescription      : "Remove a user from the whitelist.",
+    deleteWhitelistUserDescription  : "The user to remove from the whitelist.",
+    whitelistRemoved                : "✅ Removed {user} from the whitelist.",
+    whitelistNotFound               : "⚠️ {user} is not in the whitelist.",
+
+    // events/commands/getWhitelist.js
+    getWhitelistDescription         : "Display the whitelist for the current server.",
+    noWhitelistedAccounts           : "✅ Currently, there are no whitelisted accounts in this server.",
+    whitelistedAccountsList         : "**Whitelist for this server:**",
+
     // events/commands/checkPerm.js
     permViewChannel                 : "View Channel",
     permSendMessages                : "Send Messages",
@@ -69,7 +86,23 @@ export default {
     adminRemoved                    : "✅ Removed {user} from admin/moderator list.",
     adminNotFound                   : "⚠️ {user} is not in the admin/moderator list.",
 
+    // events/commands/ban.js
+    manualBanDescription            : "Directly ban a user from the current server.",
+    manualBanUserDescription        : "The user to ban.",
+    manualBanReason                 : "Manual ban by administrator",
+    manualBanNoMessage              : "User was banned manually by slash command.",
+    manualBanSuccess                : "✅ Banned {user} successfully.",
+    manualBanAlreadyBanned          : "⚠️ {user} is already banned.",
+    manualBanError                  : "❌ Error in ban command: {error}",
+
+    // events/commands/unban.js
+    manualUnbanDescription          : "Directly unban a user from the current server using the stored ban-list username.",
+    manualUnbanUsernameDescription  : "Username of the banned user (e.g., username#1234)",
+    manualUnbanSuccess              : "✅ Unbanned {username} successfully.",
+    manualUnbanError                : "❌ Error in unban command: {error}",
+
     // events/commands/adminList.js
+    getAdminListDescription         : "List all admins/moderators for the server.",
     noPermissionToViewAdmins        : "❌ You do not have permission to view the admin/moderator list.",
     adminListTitle                  : "Admin/Moderator List",
     adminListDescription            : "List of admins/moderators for ban message:",
@@ -131,14 +164,24 @@ export default {
     helpSetupValue                  : "Setup the bot by specifying which channel will trigger auto-ban and where to send notifications. If notify channel is not provided, it will use the banned channel.",
     helpCheckPermName               : "/checkperm [channel]",
     helpCheckPermValue              : "Check if the bot has the required permissions in a specific channel. If no channel is provided, checks the current channel.",
-    helpBanListName                 : "/banlist",
+    helpBanListName                 : "/getbanlist",
     helpBanListValue                : "Display a paginated list of all users who have been banned by this bot in the current server.",
+    helpAddWhitelistName            : "/addwhitelist <user>",
+    helpAddWhitelistValue           : "Add a user to the whitelist so the auto-ban pipeline ignores their messages.",
+    helpDeleteWhitelistName         : "/deletewhitelist <user>",
+    helpDeleteWhitelistValue        : "Remove a user from the whitelist.",
+    helpGetWhitelistName            : "/getwhitelist",
+    helpGetWhitelistValue           : "Display the current whitelist for the server.",
     helpAddAdminName                : "/addadmin <user>",
     helpAddAdminValue               : "Add an admin or moderator to the contact list that will be shown in ban messages sent to users.",
     helpDeleteAdminName             : "/deleteadmin <user>",
     helpDeleteAdminValue            : "Remove an admin or moderator from the contact list.",
-    helpAdminListName               : "/adminlist",
+    helpAdminListName               : "/getadminlist",
     helpAdminListValue              : "Display the list of admins/moderators who are available for contact in ban messages.",
+    helpBanName                     : "/ban <user>",
+    helpBanValue                    : "Directly ban a user and persist the ban record into the shared banned account list.",
+    helpUnbanName                   : "/unban <username>",
+    helpUnbanValue                  : "Unban a user by the stored username key from the banned account list and remove the persisted ban record.",
     helpGetBanInfoName              : "/getbaninfo <username>",
     helpGetBanInfoValue             : "Get detailed ban information about a specific user, including ban time, reason, and last message.",
     helpBanTestName                 : "/bantest [mode]",

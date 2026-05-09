@@ -7,6 +7,11 @@ import { banTestCommand } from './commands/banTest.js';
 import { addAdminCommand } from './commands/addAdmin.js';
 import { deleteAdminCommand } from './commands/deleteAdmin.js';
 import { adminList } from './commands/adminList.js';
+import { addWhitelistCommand } from './commands/addWhitelist.js';
+import { deleteWhitelistCommand } from './commands/deleteWhitelist.js';
+import { getWhitelistCommand } from './commands/getWhitelist.js';
+import { banCommand } from './commands/ban.js';
+import { unbanCommand } from './commands/unban.js';
 import { getBanInfoCommand } from './commands/getBanInfo.js';
 // Farm commands
 import { farmEnableCommand } from './commands/farm/enable.js';
@@ -30,8 +35,8 @@ export class HandleInteractionCreate {
             case 'setup':
                 await setupCommand(interaction);
                 break;
-            // Command: /banlist
-            case 'banlist':
+            // Command: /getbanlist
+            case 'getbanlist':
                 await banListCommand(interaction);
                 break;
             // Command: /checkperm (channel)
@@ -50,9 +55,29 @@ export class HandleInteractionCreate {
             case 'deleteadmin':
                 await deleteAdminCommand(interaction);
                 break;
-            // Command: /adminlist
-            case 'adminlist':
+            // Command: /getadminlist
+            case 'getadminlist':
                 await adminList(interaction);
+                break;
+            // Command: /addwhitelist (user)
+            case 'addwhitelist':
+                await addWhitelistCommand(interaction);
+                break;
+            // Command: /deletewhitelist (user)
+            case 'deletewhitelist':
+                await deleteWhitelistCommand(interaction);
+                break;
+            // Command: /getwhitelist
+            case 'getwhitelist':
+                await getWhitelistCommand(interaction);
+                break;
+            // Command: /ban (user)
+            case 'ban':
+                await banCommand(interaction);
+                break;
+            // Command: /unban (username)
+            case 'unban':
+                await unbanCommand(interaction);
                 break;
             // Command: /getbaninfo (username)
             case 'getbaninfo':

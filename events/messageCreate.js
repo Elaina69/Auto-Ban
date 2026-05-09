@@ -25,6 +25,14 @@ export default async function handleMessageCreate(message, client) {
         const settings = serverConfig[message.guild.id];
         if (!settings) return;
 
+        // Skip moderation for whitelisted users
+        if (Array.isArray(settings.whitelist) && settings.whitelist.includes(message.author.id)) {
+            return;
+        }
+
+        // Auto-ban moderation only applies after /setup has configured a banned channel
+        if (!settings.bannedChannelId) return;
+
         // Detect spam
         const spamResult = spamDetector.detectMultiChannelSpam(message);
         const isBannedChannel = spamDetector.isSpamInBannedChannel(message, serverConfig);
