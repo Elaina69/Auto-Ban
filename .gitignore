@@ -1,6 +1,8 @@
 .git/
 node_modules/
 configs/botConfig.json
+configs/botConfig.1.json
+configs/botConfig.2.json
 configs/bannedAccountsServers.json
 configs/serverConfig.json
 configs/farmData.json
@@ -8,3 +10,5 @@ configs/farmServerConfig.json
 logs/
 *.lock
 *.code-workspace
+start-bot.sh
+tmux.sh
