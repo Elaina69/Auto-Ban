@@ -157,6 +157,13 @@ export default {
     getBanInfoNotFound              : "❌ User `{username}` is not in the banned list of this server.",
     getBanInfoError                 : "❌ Error retrieving ban information: {error}",
 
+    // events/commands/deleteBanData.js
+    deleteBanDataDescription        : "Delete all stored Auto-Ban data for a user.",
+    deleteBanDataUserDescription    : "The user whose stored bot data should be deleted.",
+    deleteBanDataNoPermission       : "❌ You do not have permission to delete stored user data.",
+    deleteBanDataSuccess            : "✅ Deleted stored data for {user}.\nTotal records removed: {total}\n- Ban records: {bannedRecords}\n- Whitelist entries: {whitelistRecords}\n- Admin contact entries: {adminRecords}\n- Farm data records: {farmDataRecords}\n- Farm enable/disable entries: {farmServerRecords}",
+    deleteBanDataError              : "❌ Error deleting stored user data: {error}",
+
     // events/commands/help.js
     helpTitle                       : "Auto-Ban Bot - Command List",
     helpDescription                 : "All available commands and their functions:",
@@ -184,6 +191,8 @@ export default {
     helpUnbanValue                  : "Unban a user by the stored username key from the banned account list and remove the persisted ban record.",
     helpGetBanInfoName              : "/getbaninfo <username>",
     helpGetBanInfoValue             : "Get detailed ban information about a specific user, including ban time, reason, and last message.",
+    helpDeleteBanDataName           : "/deletebandata <user>",
+    helpDeleteBanDataValue          : "Delete all stored Auto-Ban data for a user from ban records, whitelist/admin contacts, and farm data. Admin only.",
     helpBanTestName                 : "/bantest [mode]",
     helpBanTestValue                : "Test the auto-ban functionality. Modes: 'normal' (single channel) or 'multichannel' (spam detection across 3+ channels). Admin only.",
 }

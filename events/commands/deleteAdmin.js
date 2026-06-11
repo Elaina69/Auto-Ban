@@ -5,19 +5,24 @@ import { format } from '../../utils/formatLang.js';
 
 export async function deleteAdminCommand(interaction) {
     const guildId = interaction.guildId;
-    const serverConfig = await configManager.loadServerConfig();
     const userToRemove = interaction.options.getUser('user');
 
-    if (!serverConfig[guildId] || !serverConfig[guildId].admins || !serverConfig[guildId].admins.includes(userToRemove.id)) {
+    const result = configManager.updateServerConfig(serverConfig => {
+        if (!serverConfig[guildId] || !serverConfig[guildId].admins || !serverConfig[guildId].admins.includes(userToRemove.id)) {
+            return { removed: false };
+        }
+
+        serverConfig[guildId].admins = serverConfig[guildId].admins.filter(id => id !== userToRemove.id);
+        return { removed: true };
+    });
+
+    if (!result.removed) {
         await interaction.reply({
             content: format(lang.adminNotFound, { user: userToRemove }),
             flags: MessageFlags.Ephemeral
         });
         return;
     }
-
-    serverConfig[guildId].admins = serverConfig[guildId].admins.filter(id => id !== userToRemove.id);
-    configManager.saveServerConfig(serverConfig);
 
     await interaction.reply({
         content: format(lang.adminRemoved, { user: userToRemove }),

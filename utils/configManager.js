@@ -1,9 +1,8 @@
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import lang from '../configs/lang.js';
 import readline from 'readline';
-import { randomBytes } from 'crypto';
+import { readJsonFile, updateJsonFile, writeJsonFile } from './safeJsonStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,16 +12,6 @@ const botInstance = process.env.BOT_INSTANCE || '1';
 const botConfigFile = path.join(__dirname, `../configs/botConfig.${botInstance}.json`);
 const serverConfigFile = path.join(__dirname, '../configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, '../configs/bannedAccountsServers.json');
-
-/**
- * Atomic write: write to a temp file then rename to avoid corruption
- * when multiple processes write simultaneously.
- */
-function atomicWriteSync(filePath, data) {
-    const tmpFile = `${filePath}.${randomBytes(6).toString('hex')}.tmp`;
-    fs.writeFileSync(tmpFile, data);
-    fs.renameSync(tmpFile, filePath);
-}
 
 class ConfigManager {
     /**
@@ -43,45 +32,40 @@ class ConfigManager {
 
     // Load bot configuration from file
     async loadBotConfig() {
-        if (fs.existsSync(botConfigFile)) {
-            return JSON.parse(fs.readFileSync(botConfigFile, 'utf8'));
-        } 
-        else {
-            console.log(lang.noBotConfigFile);
-
-            // Create new bot configuration
-            const token = await this.askQuestion(lang.askToken);
-            const botId = await this.askQuestion(lang.askBotId);
-            const deleteMessage = await this.askQuestion(lang.askDeleteMessage);
-            const timeDeleteMessage = await this.askQuestion(lang.askTimeDeleteMessage);
-            const channelSpamThreshold = await this.askQuestion(lang.askChannelSpamThreshold);
-            const spamWindowMs = await this.askQuestion(lang.askSpamWindowMs);
-
-            const botConfig = {
-                token: token.trim(),
-                botId: botId.trim(),
-                deleteMessage: /^y(es)?$/i.test(deleteMessage.trim()),
-                timeDeleteMessage: parseInt(timeDeleteMessage.trim()) || 86400000,
-                channelSpamThreshold: parseInt(channelSpamThreshold.trim()) || 3,
-                spamWindowMs: parseInt(spamWindowMs.trim()) || 6000
-            };
-
-            fs.writeFileSync(botConfigFile, JSON.stringify(botConfig, null, 4));
-            console.log(lang.savedBotConfig);
-
-            return botConfig;
+        try {
+            return readJsonFile(botConfigFile, { allowDefault: false });
+        } catch (err) {
+            console.warn(`[CONFIG] Could not load ${path.basename(botConfigFile)}: ${err.message}`);
         }
+
+        console.log(lang.noBotConfigFile);
+
+        // Create new bot configuration
+        const token = await this.askQuestion(lang.askToken);
+        const botId = await this.askQuestion(lang.askBotId);
+        const deleteMessage = await this.askQuestion(lang.askDeleteMessage);
+        const timeDeleteMessage = await this.askQuestion(lang.askTimeDeleteMessage);
+        const channelSpamThreshold = await this.askQuestion(lang.askChannelSpamThreshold);
+        const spamWindowMs = await this.askQuestion(lang.askSpamWindowMs);
+
+        const botConfig = {
+            token: token.trim(),
+            botId: botId.trim(),
+            deleteMessage: /^y(es)?$/i.test(deleteMessage.trim()),
+            timeDeleteMessage: parseInt(timeDeleteMessage.trim()) || 86400000,
+            channelSpamThreshold: parseInt(channelSpamThreshold.trim()) || 3,
+            spamWindowMs: parseInt(spamWindowMs.trim()) || 6000
+        };
+
+        writeJsonFile(botConfigFile, botConfig);
+        console.log(lang.savedBotConfig);
+
+        return botConfig;
     }
 
     // Load server configuration from file
     loadServerConfig() {
-        if (fs.existsSync(serverConfigFile)) {
-            return JSON.parse(fs.readFileSync(serverConfigFile, 'utf8'));
-        } 
-        else {
-            this.saveServerConfig({});
-            return {};
-        }
+        return readJsonFile(serverConfigFile, { defaultValue: {} });
     }
 
     /**
@@ -89,18 +73,21 @@ class ConfigManager {
      * @param {object} serverConfig - The server configuration to save.
      */
     saveServerConfig(serverConfig) {
-        atomicWriteSync(serverConfigFile, JSON.stringify(serverConfig, null, 4));
+        writeJsonFile(serverConfigFile, serverConfig);
+    }
+
+    /**
+     * Updates server configuration while holding the config lock.
+     * @param {(serverConfig: object) => any} updater - Mutates and/or reads the config.
+     * @returns {any}
+     */
+    updateServerConfig(updater) {
+        return updateJsonFile(serverConfigFile, {}, updater);
     }
 
     // Load banned accounts from file
     loadBannedAccounts() {
-        if (fs.existsSync(bannedAccountsFile)) {
-            return JSON.parse(fs.readFileSync(bannedAccountsFile, 'utf8'));
-        } 
-        else {
-            this.saveBannedAccounts({});
-            return {};
-        }
+        return readJsonFile(bannedAccountsFile, { defaultValue: {} });
     }
 
     /**
@@ -108,7 +95,16 @@ class ConfigManager {
      * @param {object} bannedAccounts - The banned accounts to save.
      */
     saveBannedAccounts(bannedAccounts) {
-        atomicWriteSync(bannedAccountsFile, JSON.stringify(bannedAccounts, null, 4));
+        writeJsonFile(bannedAccountsFile, bannedAccounts);
+    }
+
+    /**
+     * Updates banned accounts while holding the config lock.
+     * @param {(bannedAccounts: object) => any} updater - Mutates and/or reads the config.
+     * @returns {any}
+     */
+    updateBannedAccounts(updater) {
+        return updateJsonFile(bannedAccountsFile, {}, updater);
     }
 
     countingUsedServers() {

@@ -5,26 +5,31 @@ import { format } from '../../utils/formatLang.js';
 
 export async function addAdminCommand(interaction) {
     const guildId = interaction.guildId;
-    const serverConfig = await configManager.loadServerConfig();
     const userToAdd = interaction.options.getUser('user');
 
-    if (!serverConfig[guildId]) {
-        serverConfig[guildId] = {};
-    }
-    if (!serverConfig[guildId].admins) {
-        serverConfig[guildId].admins = [];
-    }
+    const result = configManager.updateServerConfig(serverConfig => {
+        if (!serverConfig[guildId]) {
+            serverConfig[guildId] = {};
+        }
+        if (!serverConfig[guildId].admins) {
+            serverConfig[guildId].admins = [];
+        }
 
-    if (serverConfig[guildId].admins.includes(userToAdd.id)) {
+        if (serverConfig[guildId].admins.includes(userToAdd.id)) {
+            return { alreadyExists: true };
+        }
+
+        serverConfig[guildId].admins.push(userToAdd.id);
+        return { alreadyExists: false };
+    });
+
+    if (result.alreadyExists) {
         await interaction.reply({
             content: format(lang.adminAlreadyExists, { user: userToAdd }),
             flags: MessageFlags.Ephemeral
         });
         return;
     }
-
-    serverConfig[guildId].admins.push(userToAdd.id);
-    configManager.saveServerConfig(serverConfig);
 
     await interaction.reply({
         content: format(lang.adminAdded, { user: userToAdd }),

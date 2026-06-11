@@ -1,7 +1,7 @@
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getDailyBuyPrice, getDailySellPrice, getAllCropNames } from './cropManager.js';
+import { readJsonFile, updateJsonFile, writeJsonFile } from './safeJsonStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,11 +14,7 @@ class PriceHistoryManager {
      * @returns {object} - Price history data
      */
     loadPriceHistory() {
-        if (!fs.existsSync(priceHistoryFile)) {
-            return {};
-        }
-        const data = fs.readFileSync(priceHistoryFile, 'utf8');
-        return JSON.parse(data);
+        return readJsonFile(priceHistoryFile, { defaultValue: {} });
     }
 
     /**
@@ -26,7 +22,7 @@ class PriceHistoryManager {
      * @param {object} data - Price history data
      */
     savePriceHistory(data) {
-        fs.writeFileSync(priceHistoryFile, JSON.stringify(data, null, 4));
+        writeJsonFile(priceHistoryFile, data);
     }
 
     /**
@@ -58,35 +54,41 @@ class PriceHistoryManager {
             return; // Already updated for this period
         }
 
-        // Initialize history structure if needed
-        if (!history.data) {
-            history.data = {};
-        }
-
-        // Update prices for all crops
-        for (const cropName of allCrops) {
-            if (!history.data[cropName]) {
-                history.data[cropName] = [];
+        updateJsonFile(priceHistoryFile, {}, lockedHistory => {
+            if (lockedHistory.lastUpdate === periodKey) {
+                return false;
             }
 
-            const buyPrice = getDailyBuyPrice(cropName);
-            const sellPrice = getDailySellPrice(cropName);
-
-            // Add new price point
-            history.data[cropName].push({
-                timestamp: periodKey,
-                buy: buyPrice,
-                sell: sellPrice
-            });
-
-            // Keep only last 20 periods (5 days * 4 periods per day)
-            if (history.data[cropName].length > 20) {
-                history.data[cropName] = history.data[cropName].slice(-20);
+            // Initialize history structure if needed
+            if (!lockedHistory.data) {
+                lockedHistory.data = {};
             }
-        }
 
-        history.lastUpdate = periodKey;
-        this.savePriceHistory(history);
+            // Update prices for all crops
+            for (const cropName of allCrops) {
+                if (!lockedHistory.data[cropName]) {
+                    lockedHistory.data[cropName] = [];
+                }
+
+                const buyPrice = getDailyBuyPrice(cropName);
+                const sellPrice = getDailySellPrice(cropName);
+
+                // Add new price point
+                lockedHistory.data[cropName].push({
+                    timestamp: periodKey,
+                    buy: buyPrice,
+                    sell: sellPrice
+                });
+
+                // Keep only last 20 periods (5 days * 4 periods per day)
+                if (lockedHistory.data[cropName].length > 20) {
+                    lockedHistory.data[cropName] = lockedHistory.data[cropName].slice(-20);
+                }
+            }
+
+            lockedHistory.lastUpdate = periodKey;
+            return true;
+        });
     }
 
     /**

@@ -34,10 +34,17 @@ export class BanManager {
      * @param {string} lastMessage - Last recorded message content.
      */
     saveBanRecord(guildId, user, bannedAccounts, reason, lastMessage = lang.noMessageContent) {
-        if (!bannedAccounts[guildId]) bannedAccounts[guildId] = {};
+        const record = this.createBanRecord(user, reason, lastMessage);
 
-        bannedAccounts[guildId][user.tag] = this.createBanRecord(user, reason, lastMessage);
-        configManager.saveBannedAccounts(bannedAccounts);
+        configManager.updateBannedAccounts(accounts => {
+            if (!accounts[guildId]) accounts[guildId] = {};
+            accounts[guildId][user.tag] = record;
+        });
+
+        if (bannedAccounts) {
+            if (!bannedAccounts[guildId]) bannedAccounts[guildId] = {};
+            bannedAccounts[guildId][user.tag] = record;
+        }
     }
 
     /**
@@ -47,15 +54,23 @@ export class BanManager {
      * @param {object} bannedAccounts - Persisted banned accounts object.
      */
     removeBanRecord(guildId, userId, bannedAccounts) {
-        if (!bannedAccounts[guildId]) return;
+        configManager.updateBannedAccounts(accounts => {
+            if (!accounts[guildId]) return;
 
-        for (const [username, info] of Object.entries(bannedAccounts[guildId])) {
-            if (info?.id === userId) {
-                delete bannedAccounts[guildId][username];
+            for (const [username, info] of Object.entries(accounts[guildId])) {
+                if (info?.id === userId) {
+                    delete accounts[guildId][username];
+                }
+            }
+        });
+
+        if (bannedAccounts?.[guildId]) {
+            for (const [username, info] of Object.entries(bannedAccounts[guildId])) {
+                if (info?.id === userId) {
+                    delete bannedAccounts[guildId][username];
+                }
             }
         }
-
-        configManager.saveBannedAccounts(bannedAccounts);
     }
 
     /**

@@ -145,6 +145,17 @@ export async function registerCommands(token, botId) {
                     .setDescription(lang.getBanInfoUsernameDescription)
                     .setRequired(true)
             ),
+        // Command: /deletebandata
+        new SlashCommandBuilder()
+            .setName('deletebandata')
+            .setDescription(lang.deleteBanDataDescription)
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription(lang.deleteBanDataUserDescription)
+                    .setRequired(true)
+            )
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
         // Command: /farm (minigame - not shown in /help)
         new SlashCommandBuilder()
             .setName('farm')

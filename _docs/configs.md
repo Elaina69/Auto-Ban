@@ -21,6 +21,26 @@ Some files are per-instance, while others are shared across all bot processes in
 
 This allows multiple Discord bot instances to run with different credentials while still sharing the same moderation and farm logic.
 
+### `AUTO_BAN_DATA_KEY`
+
+Optional encryption key for runtime JSON storage.
+
+- If set, `safeJsonStore` derives the AES-256-GCM key from this value.
+- A 32-byte base64 key or 64-character hex key is used directly.
+- Any other non-empty value is hashed with SHA-256 to derive the 32-byte key.
+- If unset, the bot generates a local key at `_backup/_keys/data-encryption-key`.
+
+The key must be backed up securely. Encrypted config files and encrypted backups cannot be read without the same key.
+
+### `AUTO_BAN_FSYNC_DIR`
+
+Optional durability switch for local Linux filesystems:
+
+- Unset/default: config writes fsync the temp file, then atomically rename it. Directory fsync is skipped for better compatibility with mounted filesystems.
+- `AUTO_BAN_FSYNC_DIR=1`: also fsync the parent directory after rename, which can improve crash durability on native filesystems.
+
+Do not enable this on filesystems where directory fsync may hang or fail, such as some mounted/mobile/remote filesystem bridges.
+
 ## 3. Moderation Configuration Files
 
 ### `configs/botConfig.<instance>.json`
@@ -144,7 +164,7 @@ Notes:
 
 - If a guild does not yet have config, `farmManager.isFarmingEnabled()` defaults to `true`.
 - The default prefix is `h`.
-- This file is written via `fs.writeFileSync` and does not currently use atomic writes.
+- This file is managed through `safeJsonStore`, so writes are encrypted at rest, lock-protected, and atomic.
 
 ### `configs/farmData.json`
 
@@ -251,30 +271,49 @@ Rules:
 - Overdue harvests lose `10%` yield per late hour.
 - Harvest experience gained is `floor(actualYield / 10)`.
 
-## 7. File Writes And Data Safety
+## 7. File Writes, Recovery, And Backups
 
-### Existing atomic writes
+Runtime JSON files are managed through `utils/safeJsonStore.js`.
 
-`utils/configManager.js` currently uses atomic writes for:
+Protected files:
 
+- `botConfig.<instance>.json`
 - `serverConfig.json`
 - `bannedAccountsServers.json`
-
-Pattern:
-
-1. Write to a randomly named `*.tmp` file.
-2. Use `renameSync()` to replace the original file.
-
-### Files without atomic writes yet
-
-The following files are still written directly:
-
-- `farmData.json`
 - `farmServerConfig.json`
+- `farmData.json`
 - `priceHistory.json`
-- `botConfig.<instance>.json`
 
-If the repository continues to run multiple instances that mutate farm data concurrently, this remains an operational caveat.
+Write pattern:
+
+1. Acquire a per-file lock in `_backup/_locks/`.
+2. Encrypt the JSON value using AES-256-GCM.
+3. Write the encrypted payload to a randomly named `*.tmp` file in the same directory.
+4. Flush the temp file to disk.
+5. Use `renameSync()` to replace the original file atomically.
+6. Optionally fsync the parent directory when `AUTO_BAN_FSYNC_DIR=1`.
+7. Save an encrypted last-known-good copy in `_backup/_last-good/`.
+
+Encryption key rules:
+
+- Prefer setting `AUTO_BAN_DATA_KEY` in the process environment.
+- If the environment key is missing, a local key is generated in `_backup/_keys/data-encryption-key`.
+- Plaintext legacy JSON files are migrated to encrypted storage the first time they are read through `safeJsonStore`.
+
+Recovery pattern:
+
+1. If a runtime JSON file is missing, empty, or invalid, the bot attempts recovery before normal startup.
+2. Invalid files are moved to `_backup/_corrupt/`.
+3. Recovery first tries `_backup/_last-good/`.
+4. If no last-good copy is available, recovery tries the newest zip backup in `_backup/`.
+5. Data files that can be recreated fall back to `{}`. Bot config files do not get a default token-bearing value.
+
+Backup pattern:
+
+- On every bot startup, after bot config is loaded, the bot writes `_backup/yyyy-mm-dd_hh-mm-ss.zip`.
+- A scheduled backup is also created every 7 days while the process stays online.
+- The zip contains the full `configs/` directory, including JSON and JS config files.
+- `_backup/` must stay ignored by Git because it can contain `botConfig.<instance>.json` tokens.
 
 ## 8. Command-To-Config Mapping
 
@@ -294,6 +333,12 @@ If the repository continues to run multiple instances that mutate farm data conc
 
 /ban
 	-> bannedAccountsServers.json (write path)
+
+/deletebandata
+	-> bannedAccountsServers.json
+	-> serverConfig.json (fields whitelist, admins, adminIds)
+	-> farmData.json
+	-> farmServerConfig.json (field enabled)
 
 /farm enable, /farm disable, /farm prefix
 	-> farmServerConfig.json

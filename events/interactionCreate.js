@@ -13,6 +13,7 @@ import { getWhitelistCommand } from './commands/getWhitelist.js';
 import { banCommand } from './commands/ban.js';
 import { unbanCommand } from './commands/unban.js';
 import { getBanInfoCommand } from './commands/getBanInfo.js';
+import { deleteBanDataCommand } from './commands/deleteBanData.js';
 // Farm commands
 import { farmEnableCommand } from './commands/farm/enable.js';
 import { farmPrefixCommand } from './commands/farm/prefix.js';
@@ -82,6 +83,10 @@ export class HandleInteractionCreate {
             // Command: /getbaninfo (username)
             case 'getbaninfo':
                 await getBanInfoCommand(interaction);
+                break;
+            // Command: /deletebandata (user)
+            case 'deletebandata':
+                await deleteBanDataCommand(interaction);
                 break;
             // Command: /farm (subcommands)
             case 'farm':

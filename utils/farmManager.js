@@ -1,7 +1,7 @@
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getDailyBuyPrice, getDailySellPrice } from './cropManager.js';
+import { readJsonFile, updateJsonFile, writeJsonFile } from './safeJsonStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,18 +9,25 @@ const __dirname = path.dirname(__filename);
 const farmDataFile = path.join(__dirname, '../configs/farmData.json');
 const serverConfigFile = path.join(__dirname, '../configs/farmServerConfig.json');
 
+function createDefaultFarm() {
+    return {
+        money: 5000,
+        experience: 0,
+        landSlots: 10,
+        inventory: {},
+        currentCrop: null,
+        plantedAt: null,
+        lastLogin: null
+    };
+}
+
 class FarmManager {
     /**
      * Load farm data from file
      * @returns {object} - Farm data for all users
      */
     loadFarmData() {
-        if (fs.existsSync(farmDataFile)) {
-            return JSON.parse(fs.readFileSync(farmDataFile, 'utf8'));
-        } else {
-            this.saveFarmData({});
-            return {};
-        }
+        return readJsonFile(farmDataFile, { defaultValue: {} });
     }
 
     /**
@@ -28,7 +35,16 @@ class FarmManager {
      * @param {object} farmData - Farm data to save
      */
     saveFarmData(farmData) {
-        fs.writeFileSync(farmDataFile, JSON.stringify(farmData, null, 4));
+        writeJsonFile(farmDataFile, farmData);
+    }
+
+    /**
+     * Update farm data while holding the farm data lock.
+     * @param {(farmData: object) => any} updater - Mutates and/or reads farm data
+     * @returns {any}
+     */
+    updateFarmData(updater) {
+        return updateJsonFile(farmDataFile, {}, updater);
     }
     
     /**
@@ -36,12 +52,7 @@ class FarmManager {
      * @returns {object} - Server config { guildId: { prefix: string, enabled: { userId: boolean } } }
      */
     loadServerConfig() {
-        if (fs.existsSync(serverConfigFile)) {
-            return JSON.parse(fs.readFileSync(serverConfigFile, 'utf8'));
-        } else {
-            this.saveServerConfig({});
-            return {};
-        }
+        return readJsonFile(serverConfigFile, { defaultValue: {} });
     }
     
     /**
@@ -49,7 +60,16 @@ class FarmManager {
      * @param {object} config - Server config to save
      */
     saveServerConfig(config) {
-        fs.writeFileSync(serverConfigFile, JSON.stringify(config, null, 4));
+        writeJsonFile(serverConfigFile, config);
+    }
+
+    /**
+     * Update farm server config while holding the config lock.
+     * @param {(config: object) => any} updater - Mutates and/or reads config
+     * @returns {any}
+     */
+    updateServerConfig(updater) {
+        return updateJsonFile(serverConfigFile, {}, updater);
     }
     
     /**
@@ -68,12 +88,12 @@ class FarmManager {
      * @param {string} prefix - New prefix
      */
     setServerPrefix(guildId, prefix) {
-        const config = this.loadServerConfig();
-        if (!config[guildId]) {
-            config[guildId] = { prefix: 'h', enabled: {} };
-        }
-        config[guildId].prefix = prefix;
-        this.saveServerConfig(config);
+        this.updateServerConfig(config => {
+            if (!config[guildId]) {
+                config[guildId] = { prefix: 'h', enabled: {} };
+            }
+            config[guildId].prefix = prefix;
+        });
     }
 
     /**
@@ -87,16 +107,12 @@ class FarmManager {
         const key = userId; // Use only userId so data persists across servers
         
         if (!farmData[key]) {
-            farmData[key] = {
-                money: 5000,
-                experience: 0,
-                landSlots: 10,
-                inventory: {},
-                currentCrop: null,
-                plantedAt: null,
-                lastLogin: null
-            };
-            this.saveFarmData(farmData);
+            return this.updateFarmData(data => {
+                if (!data[key]) {
+                    data[key] = createDefaultFarm();
+                }
+                return data[key];
+            });
         }
         
         return farmData[key];
@@ -109,15 +125,16 @@ class FarmManager {
      * @param {object} updates - Data to update
      */
     updateUserFarm(userId, guildId, updates) {
-        const farmData = this.loadFarmData();
         const key = userId; // Use only userId so data persists across servers
-        
-        if (!farmData[key]) {
-            farmData[key] = this.getUserFarm(userId, guildId);
-        }
-        
-        farmData[key] = { ...farmData[key], ...updates };
-        this.saveFarmData(farmData);
+
+        return this.updateFarmData(farmData => {
+            if (!farmData[key]) {
+                farmData[key] = createDefaultFarm();
+            }
+
+            farmData[key] = { ...farmData[key], ...updates };
+            return farmData[key];
+        });
     }
 
     /**
@@ -142,15 +159,15 @@ class FarmManager {
      * @param {boolean} enabled - Enable or disable
      */
     setFarmingEnabled(userId, guildId, enabled) {
-        const config = this.loadServerConfig();
-        if (!config[guildId]) {
-            config[guildId] = { prefix: 'h', enabled: {} };
-        }
-        if (!config[guildId].enabled) {
-            config[guildId].enabled = {};
-        }
-        config[guildId].enabled[userId] = enabled;
-        this.saveServerConfig(config);
+        this.updateServerConfig(config => {
+            if (!config[guildId]) {
+                config[guildId] = { prefix: 'h', enabled: {} };
+            }
+            if (!config[guildId].enabled) {
+                config[guildId].enabled = {};
+            }
+            config[guildId].enabled[userId] = enabled;
+        });
     }
 
     /**

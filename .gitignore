@@ -8,7 +8,10 @@ configs/serverConfig.json
 configs/farmData.json
 configs/farmServerConfig.json
 logs/
+_backup/
 *.lock
+configs/*.tmp
+configs/*.lock
 *.code-workspace
 start-bot.sh
 tmux.sh

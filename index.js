@@ -17,6 +17,8 @@ import lang from './configs/lang.js';
 import { Logger } from './utils/logger.js';
 // Import price history manager
 import { priceHistoryManager } from './utils/priceHistoryManager.js';
+// Import backup manager
+import { backupManager } from './utils/backupManager.js';
 
 
 // Initialize logger
@@ -27,8 +29,20 @@ logger.hookConsole();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Recover configs before loading runtime state
+backupManager.recoverConfigs();
+
 // Load bot's config
 const botConfig = await configManager.loadBotConfig();
+
+// Backup configs on startup after bot config is available
+try {
+    backupManager.createBackup('startup');
+} catch (err) {
+    console.error('[BACKUP] Startup backup failed:', err);
+}
+
+backupManager.scheduleWeeklyBackups();
 
 // Setup lockfile
 setupLockfile(botConfig.botId, __dirname, lang);

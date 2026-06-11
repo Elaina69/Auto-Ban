@@ -5,13 +5,15 @@
 Startup begins in `index.js` and runs in the following order:
 
 1. Initialize the logger.
-2. Load the bot config for the current instance.
-3. Create a lockfile using `botId`.
-4. Create the Discord client.
-5. Register slash commands globally.
-6. Attach handlers for `InteractionCreate` and `MessageCreate`.
-7. `client.login(token)`.
-8. Once the bot is online:
+2. Recover runtime JSON config files from last-good copies or zip backups.
+3. Load the bot config for the current instance.
+4. Create a startup zip backup of the full `configs/` directory.
+5. Create a lockfile using `botId`.
+6. Create the Discord client.
+7. Register slash commands globally.
+8. Attach handlers for `InteractionCreate` and `MessageCreate`.
+9. `client.login(token)`.
+10. Once the bot is online:
 	- Log the bot tag.
 	- Perform the initial `priceHistory` update.
 
@@ -19,6 +21,7 @@ Background jobs:
 
 - Every 6 hours: `priceHistoryManager.updatePriceHistory()`.
 - Every 12 hours: count how many servers have been configured via `/setup`.
+- Every 7 days: create `_backup/yyyy-mm-dd_hh-mm-ss.zip`.
 
 ## 2. InteractionCreate pipeline
 
@@ -41,6 +44,7 @@ Current routing:
 /ban         -> banCommand
 /unban       -> unbanCommand
 /getbaninfo  -> getBanInfoCommand
+/deletebandata -> deleteBanDataCommand
 /farm        -> farmEnableCommand | farmPrefixCommand
 ```
 
@@ -259,6 +263,15 @@ If the farm command is handled successfully, the handler returns `true` so that 
 
 - Look up the ban record using the stored `username#discriminator` tag key.
 - Display the timestamp, reason, user ID, display name, and last banned message.
+
+### `/deletebandata`
+
+- Delete a selected user's stored data across all guild configs managed by the bot.
+- Remove matching ban records from `bannedAccountsServers.json` by user ID or stored username key.
+- Remove the user ID from `serverConfig.json` whitelist and admin contact lists.
+- Remove the user's farm progression from `farmData.json`.
+- Remove the user's farm enable/disable entries from `farmServerConfig.json`.
+- Restricted to administrators through default slash-command permissions and an in-handler permission check.
 
 ### `/farm enable|disable`
 

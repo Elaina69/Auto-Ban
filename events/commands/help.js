@@ -68,6 +68,11 @@ export async function helpCommand(interaction) {
                 inline: false
             },
             {
+                name: lang.helpDeleteBanDataName,
+                value: lang.helpDeleteBanDataValue,
+                inline: false
+            },
+            {
                 name: lang.helpBanTestName,
                 value: lang.helpBanTestValue,
                 inline: false

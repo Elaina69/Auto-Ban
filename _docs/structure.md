@@ -18,6 +18,7 @@ Auto-Ban/
 |- start-bot.sh                # Startup script for PM2/tmux
 |- tmux.sh                     # tmux helper script
 |- configs/                    # Configuration and persisted JSON data
+|- _backup/                    # Runtime config backups, last-good copies, recovery quarantine
 |- events/                     # Event handlers and command handlers
 |- utils/                      # Config, logger, farm, crop, lockfile, formatter
 |- logs/                       # Daily log files in DD-MM-YYYY.txt format
@@ -31,22 +32,25 @@ Auto-Ban/
 `index.js` executes the full startup sequence:
 
 1. Initialize `Logger` and hook `console` output into `logs/`.
-2. Load the bot config via `configManager.loadBotConfig()`.
-3. Create a lockfile keyed by `botId` to prevent duplicate processes.
-4. Instantiate the Discord `Client` with the following intents:
+2. Recover runtime JSON config files through `backupManager.recoverConfigs()`.
+3. Load the bot config via `configManager.loadBotConfig()`.
+4. Create a startup zip backup of `configs/` in `_backup/`.
+5. Create a lockfile keyed by `botId` to prevent duplicate processes.
+6. Instantiate the Discord `Client` with the following intents:
 	- `Guilds`
 	- `GuildMessages`
 	- `MessageContent`
 	- `GuildMembers`
-5. Register slash commands globally through `registerCommands(token, botId)`.
-6. Attach event listeners:
+7. Register slash commands globally through `registerCommands(token, botId)`.
+8. Attach event listeners:
 	- `InteractionCreate` -> `HandleInteractionCreate`
 	- `MessageCreate` -> `handleMessageCreate`
-7. Log in the bot.
-8. Once `ClientReady` fires, perform the initial `priceHistory` update.
-9. Run lightweight scheduled jobs using `setInterval`:
+9. Log in the bot.
+10. Once `ClientReady` fires, perform the initial `priceHistory` update.
+11. Run lightweight scheduled jobs using `setInterval`:
 	- Every 6 hours: update `priceHistory.json`
 	- Every 12 hours: print the number of configured servers from `serverConfig.json`
+	- Every 7 days: write a full config backup zip to `_backup/`
 
 ## Events Directory
 
@@ -102,6 +106,7 @@ events/
 - `/addwhitelist`, `/deletewhitelist`, `/getwhitelist`: manage the per-guild whitelist used to bypass auto-ban checks.
 - `/ban`, `/unban`: manually manage guild bans while keeping `bannedAccountsServers.json` synchronized.
 - `/getbaninfo`: retrieve a detailed ban record by username tag.
+- `/deletebandata`: delete a selected user's stored bot data from ban records, whitelist/admin contacts, and farm data.
 
 ### Farm Group
 
@@ -120,6 +125,7 @@ utils/
 |- logger.js                   # Persists console output to daily log files
 |- lockfile.js                 # Prevents duplicate startup for the same botId
 |- formatLang.js               # String template formatter
+|- userDataManager.js          # Cross-config user data deletion helper
 ```
 
 ## Configs Directory
@@ -148,8 +154,11 @@ configs/
 
 Notes:
 
-- `configManager` uses atomic writes for `serverConfig.json` and `bannedAccountsServers.json` to reduce the risk of file corruption when multiple processes write concurrently.
-- The farm subsystem (`farmData.json`, `farmServerConfig.json`, `priceHistory.json`) still uses direct `fs.writeFileSync` writes and does not yet implement the same atomic rename strategy.
+- Runtime JSON files now use `safeJsonStore`: AES-256-GCM encryption at rest, per-file locks, temp writes, file fsync, atomic rename, and encrypted last-good copies.
+- `AUTO_BAN_DATA_KEY` can provide the encryption key. If it is not set, the bot generates a local key in `_backup/_keys/data-encryption-key`.
+- Parent directory fsync can be enabled with `AUTO_BAN_FSYNC_DIR=1` on native filesystems that support it reliably.
+- Startup recovery restores missing/empty/invalid JSON from `_backup/_last-good/` first, then from the newest `_backup/*.zip`.
+- The bot writes `_backup/yyyy-mm-dd_hh-mm-ss.zip` on startup and every 7 days while running.
 - `serverConfig.json` now holds three moderation-related per-guild slices: auto-ban channel settings, admin contacts, and the whitelist.
 
 ## Multi-Instance Support
