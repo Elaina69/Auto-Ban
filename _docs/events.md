@@ -11,7 +11,7 @@ Startup begins in `index.js` and runs in the following order:
 5. Create a lockfile using `botId`.
 6. Create the Discord client.
 7. Register slash commands globally.
-8. Attach handlers for `InteractionCreate` and `MessageCreate`.
+8. Attach handlers for `InteractionCreate`, `MessageCreate`, and guild member add/update/remove events.
 9. `client.login(token)`.
 10. Once the bot is online:
 	- Log the bot tag.
@@ -21,6 +21,7 @@ Background jobs:
 
 - Every 6 hours: `priceHistoryManager.updatePriceHistory()`.
 - Every 12 hours: count how many servers have been configured via `/setup`.
+- Every 12 hours: remove expired moderation evidence and raid incident summaries.
 - Every 7 days: create `_backup/yyyy-mm-dd_hh-mm-ss.zip`.
 
 ## 2. InteractionCreate pipeline
@@ -45,7 +46,9 @@ Current routing:
 /unban       -> unbanCommand
 /getbaninfo  -> getBanInfoCommand
 /deletebandata -> deleteBanDataCommand
-/farm        -> farmEnableCommand | farmPrefixCommand
+/raid        -> raidCommand
+/privacy     -> privacyCommand
+/farm        -> farmSlashCommand
 ```
 
 If a command or subcommand is invalid, the bot replies with an ephemeral error message.
@@ -69,16 +72,15 @@ MessageCreate
 	+-- new SpamDetector(botConfig)
 	+-- new BanManager(client)
 	|
-	+-- ignore if not in guild
-	+-- handleFarmMessage(message)
-	|     \-- return early if a farm command handled the message
+	+-- ignore if not in guild or sent by a bot
 	|
 	+-- settings = serverConfig[guildId]
-	+-- return if `/setup` has not been completed yet
+	+-- return unless auto-ban channel or raid protection is configured
 	+-- return if author.id is in settings.whitelist
 	|
 	+-- spamResult = detectMultiChannelSpam(message)
 	+-- isBannedChannel = isSpamInBannedChannel(message, serverConfig)
+	+-- raidResult = RaidDetector.handleMessage(message) when enabled
 	|
 	+-- if warning threshold is reached -> send channel warning + DM warning
 	|
@@ -92,26 +94,28 @@ MessageCreate
 
 ### Key observations
 
-- Farm messages are handled before moderation. If the user has farm mode enabled and the message matches the farm prefix, moderation stops for that message.
 - The bot does not moderate DMs and does not moderate servers that do not yet have an entry in `serverConfig.json`.
+- The bot does not process farm gameplay inside `messageCreate`; farm is now slash-only.
 - The whitelist short-circuits the moderation path before spam detection and banned-channel checks run.
-- `serverConfig[guildId]` can now exist before `/setup` because admin and whitelist commands may create the entry, so moderation still requires `bannedChannelId` to be configured.
+- `serverConfig[guildId]` can exist before `/setup`; content processing requires either `bannedChannelId` or enabled raid protection.
 - `loadServerConfig()` is a synchronous read and is called for every incoming message.
 
 ## 4. Spam detection pipeline
 
 `events/_spamDetector.js` stores `messageHistory` in process memory:
 
-- Key: `userId`
-- Value: a list of `{ channelId, content, timestamp }`
+- Key: `guildId:userId`
+- Value: a list of `{ channelId, fingerprint, timestamp }`
+- Fingerprint: HMAC-SHA-256 of normalized content using the host data key; raw text is not stored in message history.
 
 Algorithm:
 
 1. Ignore empty messages.
-2. Append the new message to the user's history.
-3. Trim the history to the configured `spamWindowMs` time window.
-4. Find all distinct channels where the user posted the same `content`.
-5. Compare the distinct channel count against `channelSpamThreshold`.
+2. Normalize content, remove zero-width formatting characters, and create a keyed fingerprint.
+3. Append the fingerprint to guild-scoped history and schedule TTL cleanup.
+4. Trim history to the configured `spamWindowMs` time window.
+5. Find all distinct channels where the user posted the same fingerprint.
+6. Compare the distinct channel count against `channelSpamThreshold`.
 
 Return values:
 
@@ -128,6 +132,12 @@ In addition to multi-channel spam detection, the bot also auto-bans if:
 - `message.channel.id === settings.bannedChannelId`
 
 The helper is named `isSpamInBannedChannel`, but semantically it is an auto-ban rule for a banned channel.
+
+### Join-raid correlation
+
+`GuildMemberAdd` opens an incident when a configurable join burst threshold is reached, then optionally quarantines the cohort. `GuildMemberUpdate` handles membership-screening release and protected-role removal; `GuildMemberRemove` cleans transient state.
+
+During an active incident, `MessageCreate` correlates one HMAC fingerprint across distinct cohort accounts and channels. `alert` only notifies, `quarantine` applies the configured role, and `enforce` bans only the account whose message completes all campaign thresholds. Join velocity or account age alone never causes a ban. Encrypted incident summaries are stored in `raidIncidents.json`; live cohorts and campaign fingerprints remain in RAM.
 
 ## 5. Warning pipeline
 
@@ -148,16 +158,16 @@ When a message satisfies either of the following conditions:
 
 `BanManager` executes the following sequence:
 
-1. `notifyUserBan(message, settings, extraChannels, isBannedChannel)`
+1. `notifyUserBan(message, settings, extraChannels, isBannedChannel, botConfig)`
 	- Build a DM embed for the user.
 	- Include the admin/mod contact list if `settings.admins` exists.
-	- Attempt to re-upload attachments through DM.
-2. `banUser(message, bannedAccounts, isBannedChannel)`
+	- Re-upload attachments through DM only when `botConfig.reuploadModerationAttachments = true`.
+2. `banUser(message, bannedAccounts, isBannedChannel, botConfig)`
 	- Call `guild.members.ban(userId, { reason })`.
 	- Persist the ban record into `bannedAccountsServers.json` using `message.author.tag` as the key.
-3. `notifyBan(message, settings, extraChannels, isBannedChannel)`
+3. `notifyBan(message, settings, extraChannels, isBannedChannel, botConfig)`
 	- Send an embed into `notifyChannelId`, or fall back to `bannedChannelId` if no notify channel is configured.
-	- Attempt to re-upload attachments into the notify channel.
+	- Re-upload attachments into the notify channel only when `botConfig.reuploadModerationAttachments = true`.
 4. `deleteUserMessages(message, botConfig, extraChannels)` if enabled.
 
 ### Persisted ban record structure
@@ -170,9 +180,16 @@ Each banned user is stored as:
   "id": "...",
   "time": "ISO timestamp",
   "lastBannedMessage": "...",
-  "reason": "Bot spam | Send message on auto ban channel"
+  "reason": "Bot spam | Send message on auto ban channel | Coordinated join-raid message campaign",
+  "contentFingerprint": "HMAC hex when available",
+  "incidentId": "optional raid incident ID",
+  "messageIds": ["..."],
+  "channelIds": ["..."],
+  "evidenceExpiresAt": "ISO timestamp"
 }
 ```
+
+`lastBannedMessage` follows `banMessageContentPolicy`; the default is a short moderation snippet. The snippet, fingerprint, and message/channel IDs are removed after `banEvidenceRetentionDays`, while minimal ban identity/reason fields remain for review and unban.
 
 ### Message deletion policy
 
@@ -195,34 +212,29 @@ General event-level error handling:
 - `messageCreate.js` wraps the whole pipeline in `try/catch`.
 - `index.js` listens for `unhandledRejection` and `uncaughtException`.
 
-## 8. Farm pipeline injected into MessageCreate
+## 8. Farm slash-command pipeline
 
-`events/farmMessageHandler.js` is invoked before moderation.
+Farm gameplay is handled through `/farm` subcommands in `events/commands/farm/slash.js`.
+No farm path reads `message.content`.
 
-Conditions for treating a message as a farm command:
-
-1. The message must originate from a guild.
-2. The sender must not be a bot.
-3. `farmManager.isFarmingEnabled(userId, guildId)` must return `true`.
-4. The message must start with the server prefix, which defaults to `h`.
-
-Once these conditions are met, the bot parses the text command and routes it as follows:
+The slash router creates a lightweight message adapter so the existing farm gameplay handlers can reuse their reply/embed logic. Inputs come from interaction options:
 
 ```text
-help | h                -> handleFarmHelp
-login | daily           -> handleFarmLogin
-status | stats | farm   -> handleFarmStatus
-grow | plant            -> handleFarmGrow
-harvest | reap          -> handleFarmHarvest
-crop [list]             -> handleCropList / handleFarmInfo
-sell                    -> handleFarmSell
-buy | purchase          -> handleFarmBuy
-expand                  -> handleFarmExpand
-role list               -> handleRoleList
-role buy                -> handleRoleBuy
+/farm help              -> handleFarmHelp
+/farm login             -> handleFarmLogin
+/farm status [user]     -> handleFarmStatus
+/farm grow crop         -> handleFarmGrow
+/farm harvest           -> handleFarmHarvest
+/farm crops [sort]      -> handleCropList
+/farm info [crop]       -> handleFarmInfo
+/farm sell crop amount  -> handleFarmSell
+/farm buy crop quantity -> handleFarmBuy
+/farm expand            -> handleFarmExpand
+/farm role-list         -> handleRoleList
+/farm role-buy role     -> handleRoleBuy
 ```
 
-If the farm command is handled successfully, the handler returns `true` so that `messageCreate` stops immediately.
+`/farm enable` and `/farm disable` keep the per-user enable state. Disabled users receive an ephemeral reminder to run `/farm enable`.
 
 ## 9. Command-specific behavior summary
 
@@ -277,9 +289,9 @@ If the farm command is handled successfully, the handler returns `true` so that 
 
 - Enable or disable farm mode per user within a guild.
 
-### `/farm prefix`
+### `/farm gameplay`
 
-- Change the message-command prefix for the entire guild.
+- `/farm help`, `/farm login`, `/farm status`, `/farm grow`, `/farm harvest`, `/farm sell`, `/farm buy`, `/farm expand`, `/farm crops`, `/farm info`, `/farm role-list`, and `/farm role-buy` run the full farm mini-game without prefix text commands.
 
 ## 10. Short pipeline summary
 
@@ -296,7 +308,6 @@ InteractionCreate
   -> command handler
 
 MessageCreate
-  -> farm router
   -> moderation settings lookup
   -> spam / banned-channel detection
   -> warning or ban

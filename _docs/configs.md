@@ -13,13 +13,31 @@ Some files are per-instance, while others are shared across all bot processes in
 
 ### `BOT_INSTANCE`
 
-`configManager.js` reads the `BOT_INSTANCE` environment variable to determine which bot config file should be loaded:
+`utils/runtimeInstance.js` validates the `BOT_INSTANCE` environment variable and `configManager.js` uses it to determine which bot config file should be loaded:
 
 - `BOT_INSTANCE=1` -> `configs/botConfig.1.json`
 - `BOT_INSTANCE=2` -> `configs/botConfig.2.json`
 - If unset -> defaults to `1`
 
 This allows multiple Discord bot instances to run with different credentials while still sharing the same moderation and farm logic.
+
+### `BOT_INSTANCES`
+
+Startup scripts read `BOT_INSTANCES` to decide which PM2 apps to create:
+
+- `BOT_INSTANCES=1,2,3` -> starts `autoban-1`, `autoban-2`, and `autoban-3`
+- `BOT_INSTANCES="1 3"` -> starts `autoban-1` and `autoban-3`
+- If unset -> scripts auto-detect `configs/botConfig.<n>.json`
+
+When no matching config file exists, the scripts fail before starting PM2 so the bot does not hang on an interactive prompt inside tmux or Docker.
+
+### `AUTO_BAN_BACKUP_OWNER`
+
+Startup scripts set this to the first resolved instance so only one PM2 process creates startup and weekly backups:
+
+- `AUTO_BAN_BACKUP_OWNER=1` and `BOT_INSTANCE=1` -> backups enabled
+- `AUTO_BAN_BACKUP_OWNER=1` and `BOT_INSTANCE=2` -> backups skipped
+- If unset -> the current process keeps the legacy behavior and creates backups
 
 ### `AUTO_BAN_DATA_KEY`
 
@@ -58,7 +76,11 @@ Actual schema:
 	"deleteMessage": true,
 	"timeDeleteMessage": 86400000,
 	"spamWindowMs": 60000,
-	"channelSpamThreshold": 4
+	"channelSpamThreshold": 4,
+	"banMessageContentPolicy": "snippet",
+	"banMessageContentMaxLength": 512,
+	"banEvidenceRetentionDays": 90,
+	"reuploadModerationAttachments": false
 }
 ```
 
@@ -70,6 +92,10 @@ Field descriptions:
 - `timeDeleteMessage`: retrospective deletion window in milliseconds.
 - `spamWindowMs`: time window for multi-channel spam detection.
 - `channelSpamThreshold`: number of distinct channels required to classify a message pattern as spam.
+- `banMessageContentPolicy`: moderation evidence policy for ban records and ban embeds. Supported values: `none`, `snippet`, `full`; default is `snippet`.
+- `banMessageContentMaxLength`: maximum stored/displayed snippet length when policy is `snippet`; default is `512`, capped at Discord's embed field limit.
+- `banEvidenceRetentionDays`: days before snippets, fingerprints, and message/channel IDs are removed; default `90`, capped at `365`.
+- `reuploadModerationAttachments`: whether the bot downloads and reposts attachments from triggering messages into DM/notify channels; default is `false`.
 
 If the file does not exist, `loadBotConfig()` prompts interactively in the terminal and creates a new one.
 
@@ -87,7 +113,22 @@ Actual schema:
 		"bannedChannelId": "1234567890",
 		"notifyChannelId": "1234567890",
 		"admins": ["111", "222"],
-		"whitelist": ["333", "444"]
+		"whitelist": ["333", "444"],
+		"raidProtection": {
+			"enabled": true,
+			"mode": "quarantine",
+			"joinThreshold": 10,
+			"joinWindowMs": 60000,
+			"campaignMinAccounts": 3,
+			"campaignMinChannels": 3,
+			"campaignWindowMs": 60000,
+			"newAccountAgeMs": 604800000,
+			"quarantineRoleId": "555",
+			"protectedRoleId": null,
+			"notifyChannelId": "1234567890",
+			"releaseAfterScreening": false,
+			"incidentRetentionDays": 30
+		}
 	}
 }
 ```
@@ -98,6 +139,10 @@ Notes:
 - `whitelist` is managed through `/addwhitelist` and `/deletewhitelist` and stores Discord user IDs.
 - If `notifyChannelId` is not provided during `/setup`, the bot assigns `bannedChannelId` as the notify channel.
 - This file is shared across all instances.
+
+### `configs/raidIncidents.json`
+
+Stores encrypted, expiring raid summaries: incident/guild IDs, timestamps, affected user IDs, aggregate join/new-account/campaign counts, action counts, status, and `expiresAt`. It does not store raw message content, a full member list, individual account ages, or live fingerprints. The file is recovered and backed up through `safeJsonStore`, pruned on startup and every 12 hours, and cleaned per user by `/deletebandata`.
 
 ### `configs/bannedAccountsServers.json`
 
@@ -145,14 +190,13 @@ Role:
 
 Purpose:
 
-- Stores the farm prefix and per-user enable/disable state for each guild.
+- Stores per-user farm enable/disable state for each guild. Older config files may still contain a legacy `prefix` value, but farm gameplay is now slash-only.
 
 Actual schema:
 
 ```json
 {
 	"<guildId>": {
-		"prefix": "h",
 		"enabled": {
 			"<userId>": true
 		}
@@ -163,7 +207,7 @@ Actual schema:
 Notes:
 
 - If a guild does not yet have config, `farmManager.isFarmingEnabled()` defaults to `true`.
-- The default prefix is `h`.
+- Existing files may still contain a legacy `prefix` field; the current bot ignores it.
 - This file is managed through `safeJsonStore`, so writes are encrypted at rest, lock-protected, and atomic.
 
 ### `configs/farmData.json`
@@ -280,6 +324,7 @@ Protected files:
 - `botConfig.<instance>.json`
 - `serverConfig.json`
 - `bannedAccountsServers.json`
+- `raidIncidents.json`
 - `farmServerConfig.json`
 - `farmData.json`
 - `priceHistory.json`
@@ -310,8 +355,8 @@ Recovery pattern:
 
 Backup pattern:
 
-- On every bot startup, after bot config is loaded, the bot writes `_backup/yyyy-mm-dd_hh-mm-ss.zip`.
-- A scheduled backup is also created every 7 days while the process stays online.
+- On startup, after bot config is loaded, the backup owner writes `_backup/yyyy-mm-dd_hh-mm-ss.zip`.
+- A scheduled backup is also created every 7 days while the backup-owner process stays online.
 - The zip contains the full `configs/` directory, including JSON and JS config files.
 - `_backup/` must stay ignored by Git because it can contain `botConfig.<instance>.json` tokens.
 
@@ -336,23 +381,32 @@ Backup pattern:
 
 /deletebandata
 	-> bannedAccountsServers.json
+	-> raidIncidents.json (remove selected user references)
 	-> serverConfig.json (fields whitelist, admins, adminIds)
 	-> farmData.json
 	-> farmServerConfig.json (field enabled)
 
-/farm enable, /farm disable, /farm prefix
+/farm enable, /farm disable
 	-> farmServerConfig.json
 
-Farm text commands
+Farm slash gameplay commands
 	-> farmData.json
 	-> crops.js
 	-> priceHistory.json
+
+/raid setup, /raid disable
+	-> serverConfig.json (field raidProtection)
+
+/raid incidents
+	-> raidIncidents.json
 ```
 
 ## 9. Important Default Values
 
 - `BOT_INSTANCE`: `1`
-- Farm prefix: `h`
+- `BOT_INSTANCES`: auto-detect `configs/botConfig.<n>.json` in helper scripts
+- `AUTO_BAN_BACKUP_OWNER`: unset outside helper scripts
+- Legacy farm prefix value: ignored when present; prefix commands are not registered.
 
 - Farm enabled: `true` if no explicit guild config exists
 - New user farm state:
@@ -362,6 +416,8 @@ Farm text commands
 
 - Spam window fallback in code: `60000 ms`
 - Spam threshold fallback in code: `3`
+- Ban message content policy fallback: `snippet`
+- Attachment re-upload fallback: `false`
 
 Operational note:
 
