@@ -48,8 +48,8 @@ class FarmManager {
     }
     
     /**
-     * Load server config (prefix and enabled settings) from file
-     * @returns {object} - Server config { guildId: { prefix: string, enabled: { userId: boolean } } }
+     * Load server config from file.
+     * @returns {object} - Server config { guildId: { enabled: { userId: boolean } } }
      */
     loadServerConfig() {
         return readJsonFile(serverConfigFile, { defaultValue: {} });
@@ -72,30 +72,6 @@ class FarmManager {
         return updateJsonFile(serverConfigFile, {}, updater);
     }
     
-    /**
-     * Get farm prefix for a server
-     * @param {string} guildId - Discord guild ID
-     * @returns {string} - Farm prefix (default: 'h')
-     */
-    getServerPrefix(guildId) {
-        const config = this.loadServerConfig();
-        return config[guildId]?.prefix || 'h';
-    }
-    
-    /**
-     * Set farm prefix for a server
-     * @param {string} guildId - Discord guild ID
-     * @param {string} prefix - New prefix
-     */
-    setServerPrefix(guildId, prefix) {
-        this.updateServerConfig(config => {
-            if (!config[guildId]) {
-                config[guildId] = { prefix: 'h', enabled: {} };
-            }
-            config[guildId].prefix = prefix;
-        });
-    }
-
     /**
      * Get user farm data, create if not exists
      * @param {string} userId - Discord user ID
@@ -161,7 +137,7 @@ class FarmManager {
     setFarmingEnabled(userId, guildId, enabled) {
         this.updateServerConfig(config => {
             if (!config[guildId]) {
-                config[guildId] = { prefix: 'h', enabled: {} };
+                config[guildId] = { enabled: {} };
             }
             if (!config[guildId].enabled) {
                 config[guildId].enabled = {};

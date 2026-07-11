@@ -1,56 +1,53 @@
 import { EmbedBuilder } from 'discord.js';
-import { farmManager } from '../../../utils/farmManager.js';
 
 export async function handleFarmHelp(message) {
-    const prefix = farmManager.getServerPrefix(message.guild.id);
-    
     const embed = new EmbedBuilder()
         .setColor(0x00ff00)
         .setTitle('🌾 Farming System - Help')
-        .setDescription('Here are the commands you can use:')
+        .setDescription('Use these slash commands to manage your farm:')
         .addFields(
             {
-                name: `💰 \`${prefix}login\``,
+                name: '💰 `/farm login`',
                 value: 'Receive $10,000 daily (resets at 00:00 UTC+7)',
                 inline: false
             },
             {
-                name: `📊 \`${prefix}status [user]\``,
-                value: 'View your farm info or another player\'s farm (mention or username)',
+                name: '📊 `/farm status [user]`',
+                value: 'View your farm info or another player\'s farm',
                 inline: false
             },
             {
-                name: `🌱 \`${prefix}grow <crop name>\``,
-                value: `Plant crops on all land slots.`,
+                name: '🌱 `/farm grow crop:<crop>`',
+                value: 'Plant crops on all land slots.',
                 inline: false
             },
             {
-                name: `🌾 \`${prefix}harvest\``,
+                name: '🌾 `/farm harvest`',
                 value: 'Harvest mature crops. Note: 10% yield loss per hour overdue!',
                 inline: false
             },
             {
-                name: `💵 \`${prefix}sell <crop name|all> <amount|all>\``,
-                value: `Sell crops from inventory. Specify amount or use \`all\` to sell everything`,
+                name: '💵 `/farm sell crop:<crop|all> amount:<amount|all>`',
+                value: 'Sell crops from inventory. Specify amount or use `all` to sell everything',
                 inline: false
             },
             {
-                name: `🛒 \`${prefix}buy <crop name> [amount|all]\``,
-                value: `Buy crops at today's market price. Use \`all\` to spend all your money`,
+                name: '🛒 `/farm buy crop:<crop> quantity:<amount|all>`',
+                value: 'Buy crops at today\'s market price. Use `all` to spend all your money',
                 inline: false
             },
             {
-                name: `🏗️ \`${prefix}expand\``,
+                name: '🏗️ `/farm expand`',
                 value: 'Expand your farm (max 100 land slots)',
                 inline: false
             },
             {
-                name: `📋 \`${prefix}crop [crop name|list] [sort]\``,
-                value: `• No args or \`list\` - View all crops\n• \`<crop name>\` - View specific crop info\nSort: \`name\`, \`buy\`, \`sell\`, \`time\`, \`yield\``,
+                name: '📋 `/farm crops` and `/farm info`',
+                value: 'List all crops, sort prices, or view detailed crop information.',
                 inline: false
             },
             {
-                name: `🏪 \`${prefix}role list\` & \`${prefix}role buy <role>\``,
+                name: '🏪 `/farm role-list` and `/farm role-buy role:<role>`',
                 value: 'View and purchase roles (if enabled in this server)',
                 inline: false
             }

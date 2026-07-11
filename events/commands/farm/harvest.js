@@ -8,14 +8,13 @@ export async function handleFarmHarvest(message) {
     
     const userFarm = farmManager.getUserFarm(userId, guildId);
     const cropStatus = farmManager.getCropStatus(userId, guildId);
-    const prefix = farmManager.getServerPrefix(guildId);
     
     // Check if there's a crop planted
     if (!userFarm.currentCrop) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ No Crops Planted')
-            .setDescription(`You haven't planted any crops!\n\n💡 Use \`${prefix}grow <crop name>\` to start planting.`)
+            .setDescription('You haven\'t planted any crops!\n\n💡 Use `/farm grow crop:<crop>` to start planting.')
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -72,7 +71,7 @@ export async function handleFarmHarvest(message) {
         embed.setDescription('🎉 Harvested on time! No yield loss!');
     }
     
-    embed.setFooter({ text: `Use ${prefix}sell ${crop.name} to sell this crop` })
+    embed.setFooter({ text: `Use /farm sell crop:${crop.name} to sell this crop` })
         .setTimestamp();
     
     await message.reply({ embeds: [embed] });

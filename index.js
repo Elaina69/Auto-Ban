@@ -9,6 +9,11 @@ import { fileURLToPath } from 'url';
 // Import bot's events
 import { HandleInteractionCreate } from './events/interactionCreate.js';
 import handleMessageCreate from './events/messageCreate.js';
+import {
+    handleGuildMemberAdd,
+    handleGuildMemberRemove,
+    handleGuildMemberUpdate
+} from './events/guildMemberEvents.js';
 // Import bot's commands
 import { registerCommands } from './events/commands.js';
 // Import language file
@@ -19,11 +24,14 @@ import { Logger } from './utils/logger.js';
 import { priceHistoryManager } from './utils/priceHistoryManager.js';
 // Import backup manager
 import { backupManager } from './utils/backupManager.js';
+// Import runtime instance helpers
+import { getBackupOwner, resolveBotInstance, shouldRunBackupsForInstance } from './utils/runtimeInstance.js';
 
 
 // Initialize logger
+const botInstance = resolveBotInstance();
 const logger = new Logger();
-logger.hookConsole();
+console.log(`[STARTUP] Auto-Ban instance ${botInstance} is starting.`);
 
 // Setup file paths
 const __filename = fileURLToPath(import.meta.url);
@@ -34,15 +42,23 @@ backupManager.recoverConfigs();
 
 // Load bot's config
 const botConfig = await configManager.loadBotConfig();
+configManager.pruneExpiredModerationData();
 
-// Backup configs on startup after bot config is available
-try {
-    backupManager.createBackup('startup');
-} catch (err) {
-    console.error('[BACKUP] Startup backup failed:', err);
+// Backup configs from one owner process when multiple instances are launched together.
+const shouldRunBackups = shouldRunBackupsForInstance();
+const backupOwner = getBackupOwner();
+
+if (shouldRunBackups) {
+    try {
+        backupManager.createBackup('startup');
+    } catch (err) {
+        console.error('[BACKUP] Startup backup failed:', err);
+    }
+
+    backupManager.scheduleWeeklyBackups();
+} else {
+    console.log(`[BACKUP] Skipping backups for instance ${botInstance}; owner is instance ${backupOwner}.`);
 }
-
-backupManager.scheduleWeeklyBackups();
 
 // Setup lockfile
 setupLockfile(botConfig.botId, __dirname, lang);
@@ -79,6 +95,10 @@ client.on(Events.MessageCreate, message =>
     handleMessageCreate(message, client)
 );
 
+client.on(Events.GuildMemberAdd, handleGuildMemberAdd);
+client.on(Events.GuildMemberUpdate, handleGuildMemberUpdate);
+client.on(Events.GuildMemberRemove, handleGuildMemberRemove);
+
 // Login bot to Discord
 client.login(botConfig.token);
 
@@ -92,6 +112,10 @@ setInterval(() => {
 setInterval(() => {
     const usedServers = configManager.countingUsedServers();
     console.log(format(lang.currentUsedServers, { count: usedServers }));
+}, 12 * 60 * 60 * 1000);
+
+setInterval(() => {
+    configManager.pruneExpiredModerationData();
 }, 12 * 60 * 60 * 1000);
 
 

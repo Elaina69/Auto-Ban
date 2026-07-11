@@ -8,9 +8,8 @@ export async function farmEnableCommand(interaction, action) {
     const enabled = action === 'enable';
     farmManager.setFarmingEnabled(userId, guildId, enabled);
     
-    const prefix = farmManager.getServerPrefix(guildId);
     const message = enabled 
-        ? `✅ Farming mode enabled! Use \`${prefix}help\` to see available commands.`
+        ? '✅ Farming mode enabled! Use `/farm help` to see available commands.'
         : '❌ Farming mode disabled.';
     
     await interaction.reply({

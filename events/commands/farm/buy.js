@@ -5,13 +5,12 @@ import { getCrop, getDailyBuyPrice } from '../../../utils/cropManager.js';
 export async function handleFarmBuy(message, args) {
     const userId = message.author.id;
     const guildId = message.guild.id;
-    const prefix = farmManager.getServerPrefix(guildId);
     
     if (args.length === 0) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Error')
-            .setDescription(`Please specify a crop name!\n\n💡 **Examples:**\n\`${prefix}buy tomato 10\` - buy 10 units\n\`${prefix}buy tomato all\` - buy with all money`)
+            .setDescription('Please specify a crop name with `/farm buy crop:<crop> quantity:<amount|all>`.')
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -34,7 +33,7 @@ export async function handleFarmBuy(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Crop Not Found')
-            .setDescription(`Crop **${cropName}** not found.\n\n💡 Use \`${prefix}info all\` to see available crops.`)
+            .setDescription(`Crop **${cropName}** not found.\n\n💡 Use \`/farm crops\` to see available crops.`)
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;

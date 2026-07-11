@@ -3,6 +3,35 @@ import { format } from '../utils/formatLang.js';
 import { ChannelType, EmbedBuilder } from 'discord.js';
 import { configManager } from '../utils/configManager.js';
 
+const DEFAULT_BAN_MESSAGE_CONTENT_POLICY = 'snippet';
+const DEFAULT_BAN_MESSAGE_CONTENT_MAX_LENGTH = 512;
+const DISCORD_EMBED_FIELD_MAX_LENGTH = 1024;
+const DEFAULT_BAN_EVIDENCE_RETENTION_DAYS = 90;
+
+function clampContentLength(value) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return DEFAULT_BAN_MESSAGE_CONTENT_MAX_LENGTH;
+    }
+
+    return Math.min(Math.max(parsed, 16), DISCORD_EMBED_FIELD_MAX_LENGTH);
+}
+
+function getMessageContentEvidence(message, botConfig = {}) {
+    const content = message.content?.trim?.() || '';
+    if (!content) return lang.noMessageContent;
+
+    const policy = botConfig.banMessageContentPolicy || DEFAULT_BAN_MESSAGE_CONTENT_POLICY;
+    if (policy === 'none') return lang.noMessageContent;
+
+    const maxLength = policy === 'full'
+        ? DISCORD_EMBED_FIELD_MAX_LENGTH
+        : clampContentLength(botConfig.banMessageContentMaxLength);
+
+    if (content.length <= maxLength) return content;
+    return `${content.slice(0, maxLength - 3)}...`;
+}
+
 export class BanManager {
     constructor(client) {
         this.client = client;
@@ -15,14 +44,20 @@ export class BanManager {
      * @param {string} lastMessage - Last recorded message content.
      * @returns {object}
      */
-    createBanRecord(user, reason, lastMessage = lang.noMessageContent) {
-        return {
+    createBanRecord(user, reason, lastMessage = lang.noMessageContent, metadata = {}) {
+        const record = {
             displayName: user.displayName || user.globalName || user.username,
             id: user.id,
             time: new Date().toISOString(),
             lastBannedMessage: lastMessage || lang.noMessageContent,
             reason
         };
+
+        for (const key of ['contentFingerprint', 'incidentId', 'messageIds', 'channelIds', 'evidenceExpiresAt']) {
+            if (metadata[key] !== undefined && metadata[key] !== null) record[key] = metadata[key];
+        }
+
+        return record;
     }
 
     /**
@@ -33,8 +68,8 @@ export class BanManager {
      * @param {string} reason - Ban reason.
      * @param {string} lastMessage - Last recorded message content.
      */
-    saveBanRecord(guildId, user, bannedAccounts, reason, lastMessage = lang.noMessageContent) {
-        const record = this.createBanRecord(user, reason, lastMessage);
+    saveBanRecord(guildId, user, bannedAccounts, reason, lastMessage = lang.noMessageContent, metadata = {}) {
+        const record = this.createBanRecord(user, reason, lastMessage, metadata);
 
         configManager.updateBannedAccounts(accounts => {
             if (!accounts[guildId]) accounts[guildId] = {};
@@ -82,9 +117,9 @@ export class BanManager {
      * @param {string} options.reason - Ban reason.
      * @param {string} [options.lastMessage] - Last recorded message content.
      */
-    async banGuildUser(guild, user, bannedAccounts, { reason, lastMessage = lang.noMessageContent }) {
+    async banGuildUser(guild, user, bannedAccounts, { reason, lastMessage = lang.noMessageContent, metadata = {} }) {
         await guild.members.ban(user.id, { reason });
-        this.saveBanRecord(guild.id, user, bannedAccounts, reason, lastMessage);
+        this.saveBanRecord(guild.id, user, bannedAccounts, reason, lastMessage, metadata);
     }
 
     /**
@@ -103,13 +138,28 @@ export class BanManager {
      * @param {import('discord.js').Message} message - The message object.
      * @param {object} bannedAccounts - The banned accounts.
      * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
+     * @param {object} [botConfig] - Bot configuration for moderation evidence policy.
      */
-    async banUser(message, bannedAccounts, isBannedChannel = false) {
-        const reason = isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam;
+    async banUser(message, bannedAccounts, isBannedChannel = false, botConfig = {}, moderation = {}) {
+        const reason = moderation.reason ||
+            (isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam);
+        const retentionDays = Math.min(Math.max(
+            Number.parseInt(botConfig.banEvidenceRetentionDays, 10) || DEFAULT_BAN_EVIDENCE_RETENTION_DAYS,
+            1
+        ), 365);
 
         await this.banGuildUser(message.guild, message.author, bannedAccounts, {
             reason,
-            lastMessage: message.content || lang.noMessageContent
+            lastMessage: getMessageContentEvidence(message, botConfig),
+            metadata: {
+                contentFingerprint: moderation.fingerprint,
+                incidentId: moderation.incidentId,
+                messageIds: message.id ? [message.id] : undefined,
+                channelIds: moderation.channelIds?.length
+                    ? [...new Set(moderation.channelIds)]
+                    : [message.channel.id],
+                evidenceExpiresAt: new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000).toISOString()
+            }
         });
     }
 
@@ -200,11 +250,13 @@ export class BanManager {
      * @param {boolean} isDM - Is this for DM (true) or channel (false).
      * @param {array} admins - List of admin user IDs for contact.
      * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
+     * @param {object} [botConfig] - Bot configuration for moderation evidence policy.
      * @returns {EmbedBuilder} - Embed builder object
      */
-    createBanEmbed(message, serverName, extraChannels = [], isDM = false, admins = [], isBannedChannel = false) {
-        const content = message.content || lang.noMessageContent;
-        const reason = isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam;
+    createBanEmbed(message, serverName, extraChannels = [], isDM = false, admins = [], isBannedChannel = false, botConfig = {}, moderation = {}) {
+        const content = getMessageContentEvidence(message, botConfig);
+        const reason = moderation.reason ||
+            (isBannedChannel ? lang.banReasonBannedChannel : lang.banReasonSpam);
 
         let channelsList = [`<#${message.channel.id}>`];
         if (extraChannels.length > 0) {
@@ -222,7 +274,7 @@ export class BanManager {
             .addFields(
                 { name: lang.userField, value: `${message.author.tag} (<@${message.author.id}>)`, inline: false },
                 { name: lang.reasonField, value: reason, inline: false },
-                { name: lang.messageContentField, value: content.substring(0, 1024) || lang.noMessageContent, inline: false },
+                { name: lang.messageContentField, value: content || lang.noMessageContent, inline: false },
                 { name: lang.channelField, value: channelsList.join(', '), inline: false },
                 { name: lang.serverField, value: serverName, inline: false }
             )
@@ -241,6 +293,10 @@ export class BanManager {
             embed.addFields({ name: lang.contactAdminsField, value: lang.noAdminsAvailable, inline: false });
         }
 
+        if (moderation.incidentId) {
+            embed.addFields({ name: 'Incident ID', value: moderation.incidentId, inline: false });
+        }
+
         return embed;
     }
 
@@ -250,16 +306,24 @@ export class BanManager {
      * @param {object} settings - The server settings.
      * @param {array} extraChannels - Additional channels where the user spammed.
      * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
+     * @param {object} [botConfig] - Bot configuration for moderation evidence policy.
      */
-    async notifyBan(message, settings, extraChannels = [], isBannedChannel = false) {
-        const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId || settings.bannedChannelId);
+    async notifyBan(message, settings, extraChannels = [], isBannedChannel = false, botConfig = {}, moderation = {}) {
+        const notifyChannelId = settings.notifyChannelId ||
+            settings.raidProtection?.notifyChannelId ||
+            settings.bannedChannelId;
+        const notifyChannel = notifyChannelId
+            ? await message.guild.channels.fetch(notifyChannelId)
+            : null;
 
         if (notifyChannel && notifyChannel.isTextBased?.()) {
-            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, false, settings.admins || [], isBannedChannel);
+            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, false, settings.admins || [], isBannedChannel, botConfig, moderation);
             await this.sendNotification(embed, notifyChannel);
 
-            // Reupload attachments if exist (to channel)
-            await this.reuploadAttachments(message, notifyChannel);
+            // Attachment re-upload is opt-in because it downloads and reposts user-provided files.
+            if (botConfig.reuploadModerationAttachments) {
+                await this.reuploadAttachments(message, notifyChannel);
+            }
         }
     }
 
@@ -269,14 +333,17 @@ export class BanManager {
      * @param {object} settings - The server settings.
      * @param {array} extraChannels - Additional channels where the user spammed.
      * @param {boolean} isBannedChannel - Whether the ban is from banned channel or spam.
+     * @param {object} [botConfig] - Bot configuration for moderation evidence policy.
      */
-    async notifyUserBan(message, settings, extraChannels = [], isBannedChannel = false) {
+    async notifyUserBan(message, settings, extraChannels = [], isBannedChannel = false, botConfig = {}, moderation = {}) {
         try {
             const user = message.author;
-            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, true, settings.admins || [], isBannedChannel);
+            const embed = this.createBanEmbed(message, message.guild.name, extraChannels, true, settings.admins || [], isBannedChannel, botConfig, moderation);
             await this.sendNotification(embed, user);
-            // Reupload attachments if exist (to user DM)
-            await this.reuploadAttachments(message, null, user);
+            // Attachment re-upload is opt-in because it downloads and reposts user-provided files.
+            if (botConfig.reuploadModerationAttachments) {
+                await this.reuploadAttachments(message, null, user);
+            }
         } catch (err) {
             console.warn(format(lang.cannotSendDM, { "message.author.tag": message.author.tag }), err.message);
         }
@@ -335,7 +402,12 @@ export class BanManager {
      */
     async notifyBanError(message, settings, err) {
         // Check if the notify channel is valid
-        const notifyChannel = await message.guild.channels.fetch(settings.notifyChannelId || settings.bannedChannelId);
+        const notifyChannelId = settings.notifyChannelId ||
+            settings.raidProtection?.notifyChannelId ||
+            settings.bannedChannelId;
+        const notifyChannel = notifyChannelId
+            ? await message.guild.channels.fetch(notifyChannelId)
+            : null;
         if (
             notifyChannel &&
             notifyChannel.isTextBased?.() &&

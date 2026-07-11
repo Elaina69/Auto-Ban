@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'crypto';
 import { fileURLToPath } from 'url';
 import { readZipEntry } from './zipUtils.js';
 
@@ -24,6 +24,13 @@ const ENCRYPTED_JSON_MARKER = 'auto-ban-encrypted-json';
 const ENCRYPTION_KEY_ENV = 'AUTO_BAN_DATA_KEY';
 
 let cachedEncryptionKey = null;
+
+export function createDataHmac(value, context = 'auto-ban') {
+    const key = getEncryptionKey({ createIfMissing: true });
+    return createHmac('sha256', key)
+        .update(`${context}\0${String(value)}`, 'utf8')
+        .digest('hex');
+}
 
 export class JsonEncryptionError extends Error {
     constructor(message, cause = null) {

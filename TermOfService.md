@@ -1,6 +1,6 @@
 # Terms of Service for Auto-Ban
 
-Last updated: 2025-12-14
+Last updated: 2026-07-12
 
 By inviting and using the Discord bot **Auto-Ban**, you agree to the following Terms of Service.  
 If you do not agree with these terms, please do not use the bot.
@@ -9,7 +9,9 @@ If you do not agree with these terms, please do not use the bot.
 
 ## 1. Description of Service
 **Auto-Ban** is a Discord moderation bot designed to:
-- Automatically detect bot accounts or suspicious automated accounts
+- Detect repeated multi-channel spam and messages sent in configured auto-ban channels
+- Detect join bursts and coordinated message campaigns from an active raid cohort
+- Optionally alert moderators, quarantine members, protect configured roles, or enforce a ban when both join-raid and message-campaign thresholds are satisfied
 - Automatically ban detected accounts based on predefined rules
 - Help server administrators protect their communities from spam bots
 
@@ -33,7 +35,7 @@ You are solely responsible for reviewing and managing bans performed by the bot.
 ---
 
 ## 4. Disclaimer of Accuracy
-Auto-Ban attempts to identify automated or bot accounts; however:
+Auto-Ban attempts to identify configured spam and raid behavior; however:
 - False positives may occur
 - We do not guarantee that all banned accounts are malicious
 

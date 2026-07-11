@@ -15,7 +15,7 @@ function getRoleShopConfig(guildId) {
 }
 
 /**
- * Handle hrole list command
+ * Handle /farm role-list.
  */
 export async function handleRoleList(message) {
     const guildId = message.guild.id;
@@ -41,7 +41,6 @@ export async function handleRoleList(message) {
         return;
     }
     
-    const prefix = farmManager.getServerPrefix(guildId);
     const roleList = roleShop.roles.map((role, index) => {
         const roleObj = message.guild.roles.cache.get(role.roleId);
         const roleName = roleObj ? roleObj.name : role.name;
@@ -52,19 +51,18 @@ export async function handleRoleList(message) {
         .setColor(0x00ff00)
         .setTitle('🏪 Role Shop')
         .setDescription(roleList)
-        .setFooter({ text: `Use ${prefix}role buy <role name> to purchase` })
+        .setFooter({ text: 'Use /farm role-buy role:<role> to purchase' })
         .setTimestamp();
     
     await message.reply({ embeds: [embed] });
 }
 
 /**
- * Handle hrole buy command
+ * Handle /farm role-buy.
  */
 export async function handleRoleBuy(message, args) {
     const guildId = message.guild.id;
     const userId = message.author.id;
-    const prefix = farmManager.getServerPrefix(guildId);
     const roleShop = getRoleShopConfig(guildId);
     
     if (!roleShop) {
@@ -81,7 +79,7 @@ export async function handleRoleBuy(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Error')
-            .setDescription(`Please specify a role name!\n\n💡 Example: \`${prefix}role buy VIP\`\nUse \`${prefix}role list\` to see available roles.`)
+            .setDescription('Please specify a role with `/farm role-buy role:<role>`.\nUse `/farm role-list` to see available roles.')
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -99,7 +97,7 @@ export async function handleRoleBuy(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Role Not Found')
-            .setDescription(`Role **${args.join(' ')}** not found in the shop.\n\n💡 Use \`${prefix}role list\` to see available roles.`)
+            .setDescription(`Role **${args.join(' ')}** not found in the shop.\n\n💡 Use \`/farm role-list\` to see available roles.`)
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;

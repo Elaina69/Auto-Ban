@@ -14,9 +14,10 @@ import { banCommand } from './commands/ban.js';
 import { unbanCommand } from './commands/unban.js';
 import { getBanInfoCommand } from './commands/getBanInfo.js';
 import { deleteBanDataCommand } from './commands/deleteBanData.js';
+import { raidCommand } from './commands/raid.js';
+import { privacyCommand } from './commands/privacy.js';
 // Farm commands
-import { farmEnableCommand } from './commands/farm/enable.js';
-import { farmPrefixCommand } from './commands/farm/prefix.js';
+import { farmSlashCommand } from './commands/farm/slash.js';
 
 export class HandleInteractionCreate {
     /**
@@ -88,25 +89,15 @@ export class HandleInteractionCreate {
             case 'deletebandata':
                 await deleteBanDataCommand(interaction);
                 break;
+            case 'raid':
+                await raidCommand(interaction);
+                break;
+            case 'privacy':
+                await privacyCommand(interaction);
+                break;
             // Command: /farm (subcommands)
             case 'farm':
-                const subcommand = interaction.options.getSubcommand();
-                switch (subcommand) {
-                    case 'enable':
-                        await farmEnableCommand(interaction, 'enable');
-                        break;
-                    case 'disable':
-                        await farmEnableCommand(interaction, 'disable');
-                        break;
-                    case 'prefix':
-                        await farmPrefixCommand(interaction);
-                        break;
-                    default:
-                        await interaction.reply({
-                            content: 'Unknown farm subcommand.',
-                            flags: MessageFlags.Ephemeral
-                        });
-                }
+                await farmSlashCommand(interaction);
                 break;
             default:
                 await interaction.reply({

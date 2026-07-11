@@ -1,18 +1,16 @@
 import { EmbedBuilder } from 'discord.js';
-import { farmManager } from '../../../utils/farmManager.js';
 import { getCrop, formatTime, getDailyBuyPrice, getDailySellPrice } from '../../../utils/cropManager.js';
 
 export async function handleFarmGrow(message, args) {
     const userId = message.author.id;
     const guildId = message.guild.id;
     const cropName = args.join(' ');
-    const prefix = farmManager.getServerPrefix(guildId);
     
     if (!cropName) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Error')
-            .setDescription(`Please specify a crop name!\n\n💡 Example: \`${prefix}grow tomato\``)
+            .setDescription('Please specify a crop name with `/farm grow crop:<crop>`.')
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -24,7 +22,7 @@ export async function handleFarmGrow(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Crop Not Found')
-            .setDescription(`Crop **${cropName}** not found.\n\n💡 Use \`${prefix}info <crop name>\` to see available crops.`)
+            .setDescription(`Crop **${cropName}** not found.\n\n💡 Use \`/farm crops\` to see available crops.`)
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -37,7 +35,7 @@ export async function handleFarmGrow(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff9900)
             .setTitle('⚠️ Already Growing')
-            .setDescription(`You're already growing **${userFarm.currentCrop.displayName}**!\n\n💡 Harvest first before planting new crops.\nUse \`${prefix}harvest\``)
+            .setDescription(`You're already growing **${userFarm.currentCrop.displayName}**!\n\n💡 Harvest first before planting new crops with \`/farm harvest\`.`)
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;

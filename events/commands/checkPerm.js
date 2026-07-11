@@ -16,7 +16,8 @@ export async function checkPermCommand(interaction) {
         { name: lang.permReadMessageHistory, perm: PermissionFlagsBits.ReadMessageHistory },
         { name: lang.permAddReactions, perm: PermissionFlagsBits.AddReactions },
         { name: lang.permManageMessages, perm: PermissionFlagsBits.ManageMessages },
-        { name: lang.permBanMembers, perm: PermissionFlagsBits.BanMembers }
+        { name: lang.permBanMembers, perm: PermissionFlagsBits.BanMembers },
+        { name: 'Manage Roles (raid quarantine)', perm: PermissionFlagsBits.ManageRoles }
     ];
 
     let result = format(lang.botPermissionInChannel, { channel: channel }) + '\n';

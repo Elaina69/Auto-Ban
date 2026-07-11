@@ -161,7 +161,7 @@ export default {
     deleteBanDataDescription        : "Delete all stored Auto-Ban data for a user.",
     deleteBanDataUserDescription    : "The user whose stored bot data should be deleted.",
     deleteBanDataNoPermission       : "❌ You do not have permission to delete stored user data.",
-    deleteBanDataSuccess            : "✅ Deleted stored data for {user}.\nTotal records removed: {total}\n- Ban records: {bannedRecords}\n- Whitelist entries: {whitelistRecords}\n- Admin contact entries: {adminRecords}\n- Farm data records: {farmDataRecords}\n- Farm enable/disable entries: {farmServerRecords}",
+    deleteBanDataSuccess            : "✅ Deleted stored data for {user}.\nTotal records removed: {total}\n- Ban records: {bannedRecords}\n- Whitelist entries: {whitelistRecords}\n- Admin contact entries: {adminRecords}\n- Farm data records: {farmDataRecords}\n- Farm enable/disable entries: {farmServerRecords}\n- Raid incident references: {raidIncidentRecords}",
     deleteBanDataError              : "❌ Error deleting stored user data: {error}",
 
     // events/commands/help.js
@@ -195,4 +195,8 @@ export default {
     helpDeleteBanDataValue          : "Delete all stored Auto-Ban data for a user from ban records, whitelist/admin contacts, and farm data. Admin only.",
     helpBanTestName                 : "/bantest [mode]",
     helpBanTestValue                : "Test the auto-ban functionality. Modes: 'normal' (single channel) or 'multichannel' (spam detection across 3+ channels). Admin only.",
+    helpRaidName                    : "/raid setup|disable|status|incidents|test",
+    helpRaidValue                   : "Configure real-time join-raid detection, quarantine, campaign enforcement, incident review, and safe alert testing. Admin only.",
+    helpPrivacyName                 : "/privacy",
+    helpPrivacyValue                : "Show how message, member, attachment, evidence, and raid incident data are processed and retained.",
 }

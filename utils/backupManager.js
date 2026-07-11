@@ -10,6 +10,7 @@ import {
     sleepSync,
     withFileLockSync
 } from './safeJsonStore.js';
+import { getBotConfigFileName, resolveBotInstance } from './runtimeInstance.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,11 +31,11 @@ function isRuntimeTempFile(relativePath) {
 
 class BackupManager {
     getManagedJsonConfigs() {
-        const botInstance = process.env.BOT_INSTANCE || '1';
-        const currentBotConfig = `botConfig.${botInstance}.json`;
+        const currentBotConfig = getBotConfigFileName(resolveBotInstance());
         const files = new Map([
             ['serverConfig.json', { defaultValue: {} }],
             ['bannedAccountsServers.json', { defaultValue: {} }],
+            ['raidIncidents.json', { defaultValue: {} }],
             ['farmData.json', { defaultValue: {} }],
             ['farmServerConfig.json', { defaultValue: {} }],
             ['priceHistory.json', { defaultValue: {} }],

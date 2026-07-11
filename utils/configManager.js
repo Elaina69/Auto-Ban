@@ -3,17 +3,27 @@ import { fileURLToPath } from 'url';
 import lang from '../configs/lang.js';
 import readline from 'readline';
 import { readJsonFile, updateJsonFile, writeJsonFile } from './safeJsonStore.js';
+import { getBotConfigFileName, resolveBotInstance } from './runtimeInstance.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // botConfig is per-instance, serverConfig and bannedAccounts are shared
-const botInstance = process.env.BOT_INSTANCE || '1';
-const botConfigFile = path.join(__dirname, `../configs/botConfig.${botInstance}.json`);
+const botInstance = resolveBotInstance();
+const botConfigFile = path.join(__dirname, '../configs', getBotConfigFileName(botInstance));
 const serverConfigFile = path.join(__dirname, '../configs/serverConfig.json');
 const bannedAccountsFile = path.join(__dirname, '../configs/bannedAccountsServers.json');
+const raidIncidentsFile = path.join(__dirname, '../configs/raidIncidents.json');
 
 class ConfigManager {
+    getBotInstance() {
+        return botInstance;
+    }
+
+    getBotConfigFile() {
+        return botConfigFile;
+    }
+
     /**
     * Asks a question in the console and returns the answer.
     * @param {string} query - The question to ask.
@@ -54,7 +64,11 @@ class ConfigManager {
             deleteMessage: /^y(es)?$/i.test(deleteMessage.trim()),
             timeDeleteMessage: parseInt(timeDeleteMessage.trim()) || 86400000,
             channelSpamThreshold: parseInt(channelSpamThreshold.trim()) || 3,
-            spamWindowMs: parseInt(spamWindowMs.trim()) || 6000
+            spamWindowMs: parseInt(spamWindowMs.trim()) || 6000,
+            banMessageContentPolicy: 'snippet',
+            banMessageContentMaxLength: 512,
+            banEvidenceRetentionDays: 90,
+            reuploadModerationAttachments: false
         };
 
         writeJsonFile(botConfigFile, botConfig);
@@ -105,6 +119,48 @@ class ConfigManager {
      */
     updateBannedAccounts(updater) {
         return updateJsonFile(bannedAccountsFile, {}, updater);
+    }
+
+    loadRaidIncidents() {
+        return readJsonFile(raidIncidentsFile, { defaultValue: {} });
+    }
+
+    updateRaidIncidents(updater) {
+        return updateJsonFile(raidIncidentsFile, {}, updater);
+    }
+
+    pruneExpiredModerationData(now = Date.now()) {
+        this.updateBannedAccounts(accounts => {
+            for (const guildBans of Object.values(accounts)) {
+                if (!guildBans || typeof guildBans !== 'object') continue;
+
+                for (const record of Object.values(guildBans)) {
+                    if (!record?.evidenceExpiresAt) continue;
+                    if (Date.parse(record.evidenceExpiresAt) > now) continue;
+
+                    record.lastBannedMessage = lang.noMessageContent;
+                    delete record.contentFingerprint;
+                    delete record.messageIds;
+                    delete record.channelIds;
+                    delete record.evidenceExpiresAt;
+                }
+            }
+        });
+
+        this.updateRaidIncidents(incidents => {
+            for (const [guildId, guildIncidents] of Object.entries(incidents)) {
+                if (!Array.isArray(guildIncidents)) {
+                    delete incidents[guildId];
+                    continue;
+                }
+
+                incidents[guildId] = guildIncidents.filter(incident =>
+                    !incident?.expiresAt || Date.parse(incident.expiresAt) > now
+                );
+
+                if (incidents[guildId].length === 0) delete incidents[guildId];
+            }
+        });
     }
 
     countingUsedServers() {

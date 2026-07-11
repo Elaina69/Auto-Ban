@@ -1,9 +1,7 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { getAllCropNames, getCrop, formatTime, getDailyBuyPrice, getDailySellPrice } from '../../../utils/cropManager.js';
-import { farmManager } from '../../../utils/farmManager.js';
 
 export async function handleCropList(message, args) {
-    const prefix = farmManager.getServerPrefix(message.guild.id);
     const allCrops = getAllCropNames();
     
     // Parse sort parameter (default: sell price descending)
@@ -16,11 +14,11 @@ export async function handleCropList(message, args) {
             .setColor(0xff9900)
             .setTitle('⚠️ Invalid Sort Option')
             .setDescription(`Please use one of these sort options:\n\n` +
-                `• \`${prefix}crop list name\` - Sort by crop name (A-Z)\n` +
-                `• \`${prefix}crop list buy\` - Sort by buy price (highest first)\n` +
-                `• \`${prefix}crop list sell\` - Sort by sell price (highest first)\n` +
-                `• \`${prefix}crop list time\` - Sort by growth time (shortest first)\n` +
-                `• \`${prefix}crop list yield\` - Sort by yield (highest first)`)
+                '• `/farm crops sort:name` - Sort by crop name (A-Z)\n' +
+                '• `/farm crops sort:buy` - Sort by buy price (highest first)\n' +
+                '• `/farm crops sort:sell` - Sort by sell price (highest first)\n' +
+                '• `/farm crops sort:time` - Sort by growth time (shortest first)\n' +
+                '• `/farm crops sort:yield` - Sort by yield (highest first)')
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -101,7 +99,7 @@ export async function handleCropList(message, args) {
             .setColor(0x00ff00)
             .setTitle(`🌾 Available Crops (Page ${page + 1}/${totalPages})`)
             .setDescription(`${sortDescription}\n\n${pages[page].join('\n\n')}`)
-            .setFooter({ text: `💡 Use ${prefix}crop list <name|buy|sell|time|yield> to sort | Prices update every 6 hours` })
+            .setFooter({ text: '💡 Use /farm crops sort:<name|buy|sell|time|yield> to sort | Prices update every 6 hours' })
             .setTimestamp();
     };
     

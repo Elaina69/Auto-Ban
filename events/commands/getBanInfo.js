@@ -1,10 +1,17 @@
 import lang from '../../configs/lang.js';
 import { format } from '../../utils/formatLang.js';
-import { EmbedBuilder, MessageFlags } from 'discord.js';
+import { EmbedBuilder, MessageFlags, PermissionFlagsBits } from 'discord.js';
 import { configManager } from '../../utils/configManager.js';
 
 export async function getBanInfoCommand(interaction) {
     try {
+        if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+            return interaction.reply({
+                content: 'This command requires server Administrator permission.',
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
         const username = interaction.options.getString('username');
         const guildId = interaction.guildId;
 
@@ -35,6 +42,17 @@ export async function getBanInfoCommand(interaction) {
                 { name: lang.getBanInfoMessageField, value: banInfo.lastBannedMessage ? banInfo.lastBannedMessage.substring(0, 1024) : lang.noMessageContent, inline: false }
             )
             .setTimestamp();
+
+        if (banInfo.incidentId) {
+            embed.addFields({ name: 'Incident ID', value: banInfo.incidentId, inline: true });
+        }
+        if (banInfo.evidenceExpiresAt) {
+            embed.addFields({
+                name: 'Evidence expires',
+                value: `<t:${Math.floor(Date.parse(banInfo.evidenceExpiresAt) / 1000)}:F>`,
+                inline: true
+            });
+        }
 
         await interaction.reply({
             embeds: [embed],

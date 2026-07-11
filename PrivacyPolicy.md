@@ -1,6 +1,6 @@
 # Privacy Policy for Auto-Ban
 
-Last updated: 2026-06-12
+Last updated: 2026-07-12
 
 This Privacy Policy explains how **Auto-Ban** collects, uses, stores, protects, and deletes data for Discord users and servers.
 
@@ -13,11 +13,17 @@ Auto-Ban may collect and store the following data when required for moderation, 
 - Discord guild IDs and channel IDs used for server configuration
 - Server-specific bot settings, such as auto-ban channels and notification channels
 - Admin contact and whitelist user IDs configured by server administrators
-- Ban records created by the bot, including user ID, display name, timestamp, ban reason, and the last message content that triggered the moderation action
+- Ban records created by the bot, including user ID, display name, timestamp, ban reason, and limited message evidence according to the configured moderation evidence policy
+- Raid incident summaries, including guild ID, incident ID, timestamps, affected user IDs, aggregate join/campaign counts, and moderation action counts
+- Raid protection settings, such as join/campaign thresholds, notification channel, quarantine role, protected role, action mode, and retention period
 - Farming mini-game data, such as user ID, balance, experience, inventory, current crop, planted timestamp, and last login timestamp
-- Farming enable/disable settings and server prefix settings
+- Farming enable/disable settings and gameplay data
 
-Auto-Ban may also temporarily process recent guild message content in memory to detect repeated multi-channel spam. This temporary spam-detection history is not used for advertising, profiling, or analytics.
+Auto-Ban temporarily processes guild message content to create keyed HMAC fingerprints for repeated cross-channel and coordinated raid-campaign detection. Recent-message history stores the fingerprint, guild/user/channel IDs, and timestamp in process memory rather than raw message text. Message content is not used for farming gameplay, advertising, profiling, analytics, or machine learning.
+
+Guild member join, update, and leave events are processed for opt-in join-raid protection. The bot does not persist a complete guild member list. Active raid cohorts are held temporarily in memory; retained incident summaries contain only affected user IDs and aggregate moderation information.
+
+Attachment re-upload for moderation notifications is disabled by default and only runs if the bot operator explicitly enables it in the bot configuration.
 
 Auto-Ban does **not** collect:
 
@@ -26,12 +32,15 @@ Auto-Ban does **not** collect:
 - Payment information
 - Direct message content for moderation
 - Presence data
+- A persistent copy of the full guild member list
 
 ## 2. How We Use Data
 
 Auto-Ban uses collected data only to provide bot functionality:
 
 - Detect repeated spam across multiple guild channels
+- Detect join bursts and coordinated message campaigns involving newly joined member cohorts
+- Apply and remove configured quarantine roles, protect sensitive roles during active incidents, and clean up transient cohort state when members leave
 - Automatically ban users who trigger configured auto-ban rules
 - Notify users and moderators about moderation actions
 - Maintain moderation history for review commands such as `/getbanlist`, `/getbaninfo`, and `/unban`
@@ -39,7 +48,7 @@ Auto-Ban uses collected data only to provide bot functionality:
 - Run the optional farming mini-game
 - Support user data deletion through `/deletebandata`
 
-Message content is used only for deterministic moderation checks, prefix command parsing, moderation notifications, and limited ban records. It is not used to train machine learning or AI models.
+Message content is used only for deterministic moderation checks, moderation notifications, and limited ban records when a moderation rule is triggered.
 
 ## 3. Data Storage and Encryption
 
@@ -51,6 +60,7 @@ Encrypted storage applies to runtime JSON files such as:
 
 - `serverConfig.json`
 - `bannedAccountsServers.json`
+- `raidIncidents.json`
 - `farmData.json`
 - `farmServerConfig.json`
 - `priceHistory.json`
@@ -66,9 +76,9 @@ Data is sent to Discord only as needed for bot functionality, such as sending mo
 
 ## 5. Data Retention
 
-Recent message content used for spam detection is kept in process memory only for the configured spam window.
+Raw message content is not stored in recent-message history. HMAC fingerprints and routing identifiers are removed after the configured spam or campaign window. Active member cohorts expire when their incident closes or times out.
 
-Ban records, whitelist/admin entries, and farming data are retained until they are no longer needed for bot functionality, are removed by a server administrator, or are deleted after a valid deletion request.
+Ban records store only the moderation evidence allowed by the bot configuration, which defaults to a short snippet. Message evidence, fingerprints, and message/channel IDs expire after `banEvidenceRetentionDays`; the minimal user ID, ban time, reason, and display label may remain so ban review and unban commands continue to work. Raid incident summaries expire after the server-configured period, from 1 to 90 days. Whitelist/admin entries and farming data remain until removed or deleted after a valid request.
 
 ## 6. Data Deletion
 
@@ -84,6 +94,7 @@ This command deletes the selected user's stored data from:
 - `farmData.json`
 - `farmServerConfig.json` farming enable/disable entries
 - `serverConfig.json` whitelist and admin contact lists
+- User references inside `raidIncidents.json`
 
 Users and server administrators may also request data deletion by contacting the bot owner:
 

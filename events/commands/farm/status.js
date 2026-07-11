@@ -4,7 +4,6 @@ import { formatTime } from '../../../utils/cropManager.js';
 
 export async function handleFarmStatus(message, args) {
     const guildId = message.guild.id;
-    const prefix = farmManager.getServerPrefix(guildId);
     
     // Determine target user
     let targetUser = message.author;
@@ -17,40 +16,13 @@ export async function handleFarmStatus(message, args) {
             targetUser = message.mentions.users.first();
             userId = targetUser.id;
         } else {
-            // Try to find user by username
-            const searchName = args.join(' ').toLowerCase();
-            const guild = message.guild;
-            
-            try {
-                // Search in guild members
-                const members = await guild.members.fetch();
-                const foundMember = members.find(member => 
-                    member.user.username.toLowerCase() === searchName ||
-                    member.user.tag.toLowerCase() === searchName ||
-                    member.displayName.toLowerCase() === searchName
-                );
-                
-                if (foundMember) {
-                    targetUser = foundMember.user;
-                    userId = targetUser.id;
-                } else {
-                    const embed = new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ User Not Found')
-                        .setDescription(`Cannot find user **${args.join(' ')}**!\n\n💡 Use: \`${prefix}status @user\` or \`${prefix}status username\``)
-                        .setTimestamp();
-                    await message.reply({ embeds: [embed] });
-                    return;
-                }
-            } catch (error) {
-                const embed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle('❌ Error')
-                    .setDescription('An error occurred while searching for the user.')
-                    .setTimestamp();
-                await message.reply({ embeds: [embed] });
-                return;
-            }
+            const embed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle('❌ User Not Found')
+                .setDescription('Use the optional `user` field in `/farm status`.')
+                .setTimestamp();
+            await message.reply({ embeds: [embed] });
+            return;
         }
     }
     

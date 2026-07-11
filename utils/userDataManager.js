@@ -83,12 +83,27 @@ class UserDataManager {
             return removed;
         });
 
+        const raidIncidentRecords = configManager.updateRaidIncidents(incidents => {
+            let removed = 0;
+            for (const guildIncidents of Object.values(incidents)) {
+                if (!Array.isArray(guildIncidents)) continue;
+                for (const incident of guildIncidents) {
+                    if (!Array.isArray(incident.affectedUserIds)) continue;
+                    const before = incident.affectedUserIds.length;
+                    incident.affectedUserIds = incident.affectedUserIds.filter(id => id !== userId);
+                    removed += before - incident.affectedUserIds.length;
+                }
+            }
+            return removed;
+        });
+
         const adminRecords = serverConfigRecords.admins + serverConfigRecords.adminIds;
         const total = bannedRecords +
             serverConfigRecords.whitelist +
             adminRecords +
             farmDataRecords +
-            farmServerRecords;
+            farmServerRecords +
+            raidIncidentRecords;
 
         return {
             total,
@@ -96,7 +111,8 @@ class UserDataManager {
             whitelistRecords: serverConfigRecords.whitelist,
             adminRecords,
             farmDataRecords,
-            farmServerRecords
+            farmServerRecords,
+            raidIncidentRecords
         };
     }
 }

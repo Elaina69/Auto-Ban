@@ -5,6 +5,7 @@ configs/botConfig.1.json
 configs/botConfig.2.json
 configs/bannedAccountsServers.json
 configs/serverConfig.json
+configs/raidIncidents.json
 configs/farmData.json
 configs/farmServerConfig.json
 logs/
@@ -13,5 +14,3 @@ _backup/
 configs/*.tmp
 configs/*.lock
 *.code-workspace
-start-bot.sh
-tmux.sh

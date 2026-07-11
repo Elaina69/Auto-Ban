@@ -5,7 +5,6 @@ import { getCrop } from '../../../utils/cropManager.js';
 export async function handleFarmSell(message, args) {
     const userId = message.author.id;
     const guildId = message.guild.id;
-    const prefix = farmManager.getServerPrefix(guildId);
     
     // Parse cropName and amount from args
     let cropName = args[0];
@@ -15,7 +14,7 @@ export async function handleFarmSell(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Error')
-            .setDescription(`Please specify a crop name or \`all\`!\n\n💡 **Examples:**\n\`${prefix}sell tomato 50\` - sell 50 tomatoes\n\`${prefix}sell tomato all\` - sell all tomatoes\n\`${prefix}sell all\` - sell all crops`)
+            .setDescription('Please specify a crop name or `all` with `/farm sell crop:<crop|all> amount:<amount|all>`.')
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -67,7 +66,7 @@ export async function handleFarmSell(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Crop Not Found')
-            .setDescription(`Crop **${cropName}** not found.\n\n💡 Use \`${prefix}info all\` to see available crops.`)
+            .setDescription(`Crop **${cropName}** not found.\n\n💡 Use \`/farm crops\` to see available crops.`)
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;
@@ -78,7 +77,7 @@ export async function handleFarmSell(message, args) {
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setTitle('❌ Not in Inventory')
-            .setDescription(`You don't have any **${crop.displayName}** in inventory!\n\n💡 Use \`${prefix}status\` to check your inventory.`)
+            .setDescription(`You don't have any **${crop.displayName}** in inventory!\n\n💡 Use \`/farm status\` to check your inventory.`)
             .setTimestamp();
         await message.reply({ embeds: [embed] });
         return;

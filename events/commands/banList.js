@@ -1,8 +1,15 @@
 import lang from '../../configs/lang.js';
-import { MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from 'discord.js';
+import { MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, PermissionFlagsBits } from 'discord.js';
 import { configManager } from '../../utils/configManager.js';
 
 export async function banListCommand(interaction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({
+            content: 'This command requires server Administrator permission.',
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
     const guildId = interaction.guildId;
     const bannedAccounts = await configManager.loadBannedAccounts();
     const bannedUsersObj = bannedAccounts[guildId] || {};

@@ -2,6 +2,7 @@ import { MessageFlags } from 'discord.js';
 import lang from '../../configs/lang.js';
 import { format } from '../../utils/formatLang.js';
 import { userDataManager } from '../../utils/userDataManager.js';
+import { raidDetector } from '../_raidDetector.js';
 
 export async function deleteBanDataCommand(interaction) {
     try {
@@ -14,6 +15,7 @@ export async function deleteBanDataCommand(interaction) {
 
         const user = interaction.options.getUser('user');
         const result = userDataManager.deleteUserData(user);
+        raidDetector.forgetUser(user.id);
 
         return interaction.reply({
             content: format(lang.deleteBanDataSuccess, {
@@ -23,7 +25,8 @@ export async function deleteBanDataCommand(interaction) {
                 whitelistRecords: result.whitelistRecords,
                 adminRecords: result.adminRecords,
                 farmDataRecords: result.farmDataRecords,
-                farmServerRecords: result.farmServerRecords
+                farmServerRecords: result.farmServerRecords,
+                raidIncidentRecords: result.raidIncidentRecords
             }),
             flags: MessageFlags.Ephemeral
         });

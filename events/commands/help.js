@@ -76,6 +76,16 @@ export async function helpCommand(interaction) {
                 name: lang.helpBanTestName,
                 value: lang.helpBanTestValue,
                 inline: false
+            },
+            {
+                name: lang.helpRaidName,
+                value: lang.helpRaidValue,
+                inline: false
+            },
+            {
+                name: lang.helpPrivacyName,
+                value: lang.helpPrivacyValue,
+                inline: false
             }
         )
         .setTimestamp();

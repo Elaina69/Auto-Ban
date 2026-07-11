@@ -1,12 +1,10 @@
 import { EmbedBuilder } from 'discord.js';
 import { getCrop, getAllCropNames, formatTime, getDailyBuyPrice, getDailySellPrice } from '../../../utils/cropManager.js';
 import { crops } from '../../../configs/crops.js';
-import { farmManager } from '../../../utils/farmManager.js';
 import { priceHistoryManager } from '../../../utils/priceHistoryManager.js';
 
 export async function handleFarmInfo(message, args) {
     const cropName = args.join(' ');
-    const prefix = farmManager.getServerPrefix(message.guild.id);
     
     // If no crop specified, show list of all crops with today's prices
     if (!cropName || cropName.toLowerCase() === 'all') {
@@ -37,7 +35,7 @@ export async function handleFarmInfo(message, args) {
     // Get specific crop info
     const crop = getCrop(cropName);
     if (!crop) {
-        await message.reply(`❌ Crop **${cropName}** not found.\n💡 Use \`${prefix}crop all\` to see all available crops.`);
+        await message.reply(`❌ Crop **${cropName}** not found.\n💡 Use \`/farm crops\` to see all available crops.`);
         return;
     }
     
